@@ -2,26 +2,27 @@ import { SlashCommandBuilder } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('skip')
-  .setDescription('Skip the current track');
+  .setDescription('Şu anki şarkıyı atla');
 
 export async function execute(interaction, player) {
   await interaction.deferReply();
 
   const queue = player.nodes.get(interaction.guild);
 
-  if (!queue) {
-    return await interaction.editReply('There is no music playing in this server!');
+  if (!queue || !queue.node.isPlaying()) {
+    return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
-  if (queue.tracks.size === 0) {
-    return await interaction.editReply('No more tracks in the queue!');
+  if (queue.tracks.size === 0 && queue.repeatMode === 0) {
+    return await interaction.editReply('❌ Kuyrukta atlanacak şarkı yok!');
   }
 
   try {
+    const currentTrack = queue.currentTrack;
     queue.node.skip();
-    await interaction.editReply('⏭️ Skipped to next track!');
+    await interaction.editReply(`⏭️ **${currentTrack.title}** atlandı!`);
   } catch (error) {
     console.error('Skip command error:', error);
-    await interaction.editReply(`❌ Error: ${error.message}`);
+    await interaction.editReply(`❌ Hata: ${error.message}`);
   }
 }

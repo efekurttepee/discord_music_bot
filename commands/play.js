@@ -1,32 +1,38 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('play')
-  .setDescription('Play a song or playlist from YouTube, Spotify, or Apple Music')
+  .setDescription('YouTube veya Spotify\'dan müzik çal')
   .addStringOption(option =>
     option.setName('query')
-      .setDescription('The song name or URL to play')
+      .setDescription('Şarkı adı, URL veya Spotify linki')
       .setRequired(true));
 
 export async function execute(interaction, player) {
   await interaction.deferReply();
 
   const query = interaction.options.getString('query');
-  const channel = interaction.member.voice.channel;
+  const channel = interaction.member?.voice?.channel;
 
   if (!channel) {
-    return await interaction.editReply('You need to be in a voice channel to play music!');
+    return await interaction.editReply('❌ Müzik çalmak için bir ses kanalında olmalısın!');
+  }
+
+  // Check if bot has permission to join and speak
+  const botMember = interaction.guild.members.me;
+  if (!channel.permissionsFor(botMember)?.has(['Connect', 'Speak'])) {
+    return await interaction.editReply('❌ Ses kanalına katılma veya konuşma iznim yok!');
   }
 
   try {
-    // Search for the track first
+    // Search for the track
     const searchResult = await player.search(query, {
       requestedBy: interaction.user,
       searchEngine: 'auto'
     });
 
     if (!searchResult.hasTracks()) {
-      return await interaction.editReply('No tracks found for your query!');
+      return await interaction.editReply('❌ Aradığın şarkı bulunamadı!');
     }
 
     // Get or create queue
@@ -44,7 +50,8 @@ export async function execute(interaction, player) {
         leaveOnEnd: true,
         leaveOnEndCooldown: 300000,
         volume: 50,
-        selfDeaf: true
+        selfDeaf: true,
+        skipFFmpeg: false
       });
     } else {
       // Update metadata if queue already exists
@@ -55,37 +62,72 @@ export async function execute(interaction, player) {
     try {
       if (!queue.connection || !queue.connection.channel) {
         await queue.connect(channel);
-        // Wait a bit for connection to be ready
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait a bit for connection to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } else if (queue.connection.channel.id !== channel.id) {
+        // If bot is in a different channel, reconnect
+        queue.node.disconnect();
+        await queue.connect(channel);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (connectionError) {
       console.error('Connection error:', connectionError);
-      return await interaction.editReply(`❌ Failed to connect to voice channel: ${connectionError.message}`);
+      return await interaction.editReply(`❌ Ses kanalına bağlanılamadı: ${connectionError.message}`);
     }
 
     // Add tracks to queue
     const firstTrack = searchResult.tracks[0];
+    let replyMessage = '';
+
     if (searchResult.playlist) {
-      searchResult.tracks.forEach(track => queue.addTrack(track));
-      await interaction.editReply(`✅ Added **${searchResult.tracks.length}** tracks from **${searchResult.playlist.title}** to the queue!`);
+      // Add all tracks from playlist
+      for (const track of searchResult.tracks) {
+        queue.addTrack(track);
+      }
+      replyMessage = `✅ **${searchResult.tracks.length}** şarkı **${searchResult.playlist.title}** çalma listesinden kuyruğa eklendi!`;
     } else {
+      // Add single track
       queue.addTrack(firstTrack);
-      await interaction.editReply(`✅ Added **${firstTrack.title}** to the queue!`);
+      replyMessage = `✅ **${firstTrack.title}** kuyruğa eklendi!`;
     }
+
+    // Create embed for response
+    const embed = new EmbedBuilder()
+      .setTitle('🎵 Müzik Eklendi')
+      .setDescription(replyMessage)
+      .setColor('#0099ff');
+
+    if (searchResult.playlist) {
+      embed.setThumbnail(searchResult.playlist.thumbnail || firstTrack.thumbnail);
+    } else {
+      embed
+        .setThumbnail(firstTrack.thumbnail)
+        .addFields(
+          { name: 'Sanatçı', value: firstTrack.author || 'Bilinmiyor', inline: true },
+          { name: 'Süre', value: firstTrack.duration || 'Bilinmiyor', inline: true },
+          { name: 'Kaynak', value: firstTrack.source || 'Bilinmiyor', inline: true }
+        );
+    }
+
+    await interaction.editReply({ embeds: [embed] });
 
     // Start playing if not already playing
     if (!queue.node.isPlaying() && !queue.node.isPaused()) {
       try {
         await queue.node.play();
-        console.log(`✅ Started playing: ${firstTrack.title}`);
+        console.log(`✅ Started playing: ${firstTrack.title} in ${interaction.guild.name}`);
       } catch (playError) {
         console.error('Play error:', playError);
-        await interaction.editReply(`❌ Failed to start playback: ${playError.message}`);
+        await interaction.followUp({
+          content: `❌ Çalma başlatılamadı: ${playError.message}`,
+          ephemeral: true
+        });
       }
     }
 
   } catch (error) {
     console.error('Play command error:', error);
-    await interaction.editReply(`❌ Error: ${error.message}`);
+    const errorMessage = error.message || 'Bilinmeyen bir hata oluştu';
+    await interaction.editReply(`❌ Hata: ${errorMessage}`);
   }
 }

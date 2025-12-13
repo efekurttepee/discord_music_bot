@@ -3,49 +3,62 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'disc
 export async function handlePlayerStart(queue, track) {
   const channel = queue.metadata.channel;
 
-  if (!channel) return;
+  if (!channel) {
+    console.warn('⚠️ No channel found in queue metadata');
+    return;
+  }
 
   try {
     const progress = queue.node.createProgressBar();
     const volume = queue.node.volume;
+    const isPaused = queue.node.isPaused();
 
     const embed = new EmbedBuilder()
-      .setTitle('🎵 Now Playing')
+      .setTitle(isPaused ? '⏸️ Duraklatıldı' : '🎵 Şu An Çalıyor')
       .setDescription(`[${track.title}](${track.url})`)
       .addFields(
-        { name: 'Artist', value: track.author || 'Unknown', inline: true },
-        { name: 'Duration', value: track.duration, inline: true },
-        { name: 'Requested By', value: track.requestedBy?.username || 'Unknown', inline: true },
-        { name: 'Volume', value: `${volume}%`, inline: true },
-        { name: 'Progress', value: progress, inline: false }
+        { name: '🎤 Sanatçı', value: track.author || 'Bilinmiyor', inline: true },
+        { name: '⏱️ Süre', value: track.duration || 'Bilinmiyor', inline: true },
+        { name: '👤 İsteyen', value: track.requestedBy?.username || 'Bilinmiyor', inline: true },
+        { name: '🔊 Ses', value: `${volume}%`, inline: true },
+        { name: '📊 İlerleme', value: progress || 'Yükleniyor...', inline: false }
       )
-      .setColor('#0099ff')
+      .setColor(isPaused ? '#FFA500' : '#0099ff')
       .setThumbnail(track.thumbnail)
-      .setFooter({ text: `Source: ${track.source}` });
+      .setFooter({ text: `Kaynak: ${track.source || 'Bilinmiyor'}` });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId('pause')
-          .setLabel('⏯️ Pause')
+          .setLabel(isPaused ? '▶️ Devam Et' : '⏸️ Duraklat')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId('skip')
-          .setLabel('⏭️ Skip')
+          .setLabel('⏭️ Atla')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId('shuffle')
-          .setLabel('🔀 Shuffle')
+          .setLabel('🔀 Karıştır')
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('loop')
-          .setLabel('🔁 Loop')
+          .setLabel('🔁 Döngü')
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('stop')
-          .setLabel('🛑 Stop')
+          .setLabel('🛑 Durdur')
           .setStyle(ButtonStyle.Danger)
       );
+
+    // Delete old now playing message if exists
+    if (queue.metadata.nowPlayingMessage) {
+      try {
+        await queue.metadata.nowPlayingMessage.delete().catch(() => {});
+      } catch (error) {
+        // Ignore deletion errors
+      }
+    }
 
     const message = await channel.send({
       embeds: [embed],

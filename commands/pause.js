@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
-  .setName('stop')
-  .setDescription('Müziği durdur ve kuyruğu temizle');
+  .setName('pause')
+  .setDescription('Müziği duraklat/devam ettir');
 
 export async function execute(interaction, player) {
   await interaction.deferReply();
@@ -14,10 +14,15 @@ export async function execute(interaction, player) {
   }
 
   try {
-    queue.delete();
-    await interaction.editReply('⏹️ Müzik durduruldu ve kuyruk temizlendi!');
+    if (queue.node.isPaused()) {
+      queue.node.resume();
+      await interaction.editReply('▶️ Müzik devam ediyor!');
+    } else {
+      queue.node.pause();
+      await interaction.editReply('⏸️ Müzik duraklatıldı!');
+    }
   } catch (error) {
-    console.error('Stop command error:', error);
+    console.error('Pause command error:', error);
     await interaction.editReply(`❌ Hata: ${error.message}`);
   }
 }

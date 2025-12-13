@@ -2,67 +2,68 @@ import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, But
 
 export const data = new SlashCommandBuilder()
   .setName('nowplaying')
-  .setDescription('Show information about the currently playing track');
+  .setDescription('Şu an çalan şarkı hakkında bilgi göster');
 
 export async function execute(interaction, player) {
   await interaction.deferReply();
 
   const queue = player.nodes.get(interaction.guild);
 
-  if (!queue) {
-    return await interaction.editReply('There is no music playing in this server!');
+  if (!queue || !queue.node.isPlaying()) {
+    return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
   if (!queue.currentTrack) {
-    return await interaction.editReply('No track is currently playing!');
+    return await interaction.editReply('❌ Şu anda çalan şarkı yok!');
   }
 
   try {
     const track = queue.currentTrack;
     const progress = queue.node.createProgressBar();
     const volume = queue.node.volume;
+    const isPaused = queue.node.isPaused();
 
     const embed = new EmbedBuilder()
-      .setTitle('🎵 Now Playing')
+      .setTitle(isPaused ? '⏸️ Duraklatıldı' : '🎵 Şu An Çalıyor')
       .setDescription(`[${track.title}](${track.url})`)
       .addFields(
-        { name: 'Artist', value: track.author || 'Unknown', inline: true },
-        { name: 'Duration', value: track.duration, inline: true },
-        { name: 'Requested By', value: track.requestedBy?.username || 'Unknown', inline: true },
-        { name: 'Volume', value: `${volume}%`, inline: true },
-        { name: 'Progress', value: progress, inline: false }
+        { name: '🎤 Sanatçı', value: track.author || 'Bilinmiyor', inline: true },
+        { name: '⏱️ Süre', value: track.duration || 'Bilinmiyor', inline: true },
+        { name: '👤 İsteyen', value: track.requestedBy?.username || 'Bilinmiyor', inline: true },
+        { name: '🔊 Ses', value: `${volume}%`, inline: true },
+        { name: '📊 İlerleme', value: progress || 'Yükleniyor...', inline: false }
       )
-      .setColor('#0099ff')
+      .setColor(isPaused ? '#FFA500' : '#0099ff')
       .setThumbnail(track.thumbnail)
-      .setFooter({ text: `Source: ${track.source}` });
+      .setFooter({ text: `Kaynak: ${track.source || 'Bilinmiyor'}` });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId('pause')
-          .setLabel('⏯️ Pause')
+          .setLabel(isPaused ? '▶️ Devam Et' : '⏸️ Duraklat')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId('skip')
-          .setLabel('⏭️ Skip')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('previous')
-          .setLabel('⏮️ Previous')
+          .setLabel('⏭️ Atla')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId('shuffle')
-          .setLabel('🔀 Shuffle')
+          .setLabel('🔀 Karıştır')
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('loop')
-          .setLabel('🔁 Loop')
-          .setStyle(ButtonStyle.Secondary)
+          .setLabel('🔁 Döngü')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('stop')
+          .setLabel('🛑 Durdur')
+          .setStyle(ButtonStyle.Danger)
       );
 
     await interaction.editReply({ embeds: [embed], components: [row] });
   } catch (error) {
     console.error('NowPlaying command error:', error);
-    await interaction.editReply(`❌ Error: ${error.message}`);
+    await interaction.editReply(`❌ Hata: ${error.message}`);
   }
 }
