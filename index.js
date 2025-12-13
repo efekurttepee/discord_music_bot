@@ -1,7 +1,7 @@
 // SSL Certificate Fix - Must be at the very top before any imports
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, SlashCommandStringOption, SlashCommandSubcommandBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, SlashCommandStringOption, SlashCommandSubcommandBuilder, REST, Routes } from 'discord.js';
 import { Player } from 'discord-player';
 import { DefaultExtractors } from '@discord-player/extractor';
 import dotenv from 'dotenv';
@@ -139,37 +139,20 @@ client.on('interactionCreate', async interaction => {
 const commands = [
   new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play a song or playlist from YouTube, Spotify, or Apple Music')
+    .setDescription('Plays a song')
     .addStringOption(option =>
       option.setName('query')
-        .setDescription('The song name or URL to play')
+        .setDescription('Song name or URL')
         .setRequired(true)),
   new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Stop the music and clear the queue'),
+    .setDescription('Stops the music'),
   new SlashCommandBuilder()
     .setName('skip')
-    .setDescription('Skip the current track'),
-  new SlashCommandBuilder()
-    .setName('queue')
-    .setDescription('Display the current music queue'),
-  new SlashCommandBuilder()
-    .setName('loop')
-    .setDescription('Toggle loop mode')
-    .addStringOption(option =>
-      option.setName('mode')
-        .setDescription('Loop mode: off, track, or queue')
-        .addChoices(
-          { name: 'Off', value: 'off' },
-          { name: 'Track', value: 'track' },
-          { name: 'Queue', value: 'queue' }
-        )),
-  new SlashCommandBuilder()
-    .setName('shuffle')
-    .setDescription('Shuffle the current queue'),
+    .setDescription('Skips current song'),
   new SlashCommandBuilder()
     .setName('ping')
-    .setDescription('Check the bot\'s latency')
+    .setDescription('Check latency')
 ];
 
 // Login to Discord with error handling
@@ -184,11 +167,13 @@ client.login(process.env.DISCORD_TOKEN)
     console.log('🔹 Ensure Discord API is accessible');
   });
 
-// Register slash commands when bot is ready
+// Register slash commands when bot is ready using REST API
 client.on('ready', async () => {
   try {
-    await client.application.commands.set(commands);
-    console.log('✅ Successfully registered application (/) commands.');
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+    console.log('Started refreshing application (/) commands.');
+    await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+    console.log('Successfully reloaded application (/) commands.');
     console.log(`🎵 ${client.user.tag} is online and ready!`);
     console.log(`🌍 Serving ${client.guilds.cache.size} guilds`);
   } catch (error) {
