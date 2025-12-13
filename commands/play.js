@@ -114,15 +114,35 @@ export async function execute(interaction, player) {
     // Start playing if not already playing
     if (!queue.node.isPlaying() && !queue.node.isPaused()) {
       try {
+        // Ensure connection is ready
+        if (!queue.connection || !queue.connection.state || queue.connection.state.status !== 'ready') {
+          console.log('⏳ Waiting for voice connection to be ready...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        // Ensure queue has tracks
+        if (queue.tracks.size === 0 && !queue.currentTrack) {
+          throw new Error('No tracks in queue to play');
+        }
+
+        console.log(`🎵 Attempting to play track in ${interaction.guild.name}`);
         await queue.node.play();
-        console.log(`✅ Started playing: ${firstTrack.title} in ${interaction.guild.name}`);
+        console.log(`✅ Playback started successfully`);
       } catch (playError) {
-        console.error('Play error:', playError);
-        await interaction.followUp({
-          content: `❌ Çalma başlatılamadı: ${playError.message}`,
-          ephemeral: true
-        });
+        console.error('❌ Play error:', playError);
+        console.error('Error stack:', playError.stack);
+        
+        try {
+          await interaction.followUp({
+            content: `❌ Çalma başlatılamadı: ${playError.message}\n🔹 Lütfen tekrar deneyin veya başka bir şarkı deneyin.`,
+            ephemeral: true
+          });
+        } catch (followUpError) {
+          console.error('Failed to send follow-up:', followUpError);
+        }
       }
+    } else {
+      console.log(`ℹ️ Music already playing or paused in ${interaction.guild.name}`);
     }
 
   } catch (error) {

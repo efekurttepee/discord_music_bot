@@ -172,32 +172,52 @@ for (const file of commandFiles) {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    const command = client.commands.get(interaction.commandName);
+    // Check if interaction is still valid (not outdated)
+    if (interaction.isCommand() && interaction.commandName) {
+        const command = client.commands.get(interaction.commandName);
 
-    if (!command) {
-        console.warn(`⚠️ Unknown command: ${interaction.commandName}`);
-        return;
-    }
-
-    try {
-        await command.execute(interaction, player);
-    } catch (error) {
-        console.error('Command execution error:', error);
-        try {
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ 
-                    content: `❌ Bir hata oluştu: ${error.message}`, 
-                    ephemeral: true 
-                });
-            } else {
-                await interaction.reply({ 
-                    content: `❌ Bir hata oluştu: ${error.message}`, 
-                    ephemeral: true 
-                });
+        if (!command) {
+            console.warn(`⚠️ Unknown command: ${interaction.commandName}`);
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ 
+                        content: '❌ Bu komut bulunamadı. Lütfen birkaç dakika bekleyip tekrar deneyin.', 
+                        ephemeral: true 
+                    });
+                }
+            } catch (error) {
+                // Ignore interaction errors
             }
-        } catch (followUpError) {
-            if (followUpError.code !== 10062) {
-                console.error('Follow-up error:', followUpError);
+            return;
+        }
+
+        try {
+            await command.execute(interaction, player);
+        } catch (error) {
+            console.error('Command execution error:', error);
+            
+            // Handle specific Discord errors
+            if (error.code === 10062 || error.message.includes('interaction') && error.message.includes('not found')) {
+                console.warn('⚠️ Interaction expired or not found');
+                return; // Don't try to reply to expired interactions
+            }
+
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ 
+                        content: `❌ Bir hata oluştu: ${error.message}`, 
+                        ephemeral: true 
+                    });
+                } else {
+                    await interaction.reply({ 
+                        content: `❌ Bir hata oluştu: ${error.message}`, 
+                        ephemeral: true 
+                    });
+                }
+            } catch (followUpError) {
+                if (followUpError.code !== 10062 && followUpError.code !== 404) {
+                    console.error('Follow-up error:', followUpError);
+                }
             }
         }
     }
@@ -297,13 +317,34 @@ client.once('ready', async () => {
         
         console.log('🔄 Refreshing application (/) commands...');
         
-        // Register commands globally
-        await rest.put(
-            Routes.applicationCommands(client.user.id),
-            { body: commands }
-        );
-        
-        console.log(`✅ Successfully reloaded ${commands.length} application (/) commands.`);
+        try {
+            // Register commands globally with retry
+            const data = await rest.put(
+                Routes.applicationCommands(client.user.id),
+                { body: commands }
+            );
+            
+            console.log(`✅ Successfully reloaded ${commands.length} application (/) commands.`);
+            console.log(`📝 Registered commands: ${commands.map(c => c.name).join(', ')}`);
+            
+            // Wait a bit for Discord to propagate commands
+            console.log('⏳ Waiting 2 seconds for Discord to sync commands...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (commandError) {
+            console.error('❌ Failed to register commands:', commandError);
+            // Try again after a delay
+            setTimeout(async () => {
+                try {
+                    await rest.put(
+                        Routes.applicationCommands(client.user.id),
+                        { body: commands }
+                    );
+                    console.log('✅ Commands registered on retry');
+                } catch (retryError) {
+                    console.error('❌ Retry failed:', retryError);
+                }
+            }, 5000);
+        }
 
         // Check for restart notification
         const restartStatePath = path.join(__dirname, 'restart_state.json');
