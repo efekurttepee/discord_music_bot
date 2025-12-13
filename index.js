@@ -85,7 +85,10 @@ const player = new Player(client, {
 
 // Debug logging
 player.events.on('debug', (queue, message) => {
-    console.log(`[DEBUG] ${message}`);
+    // Only log voice connection related debugs to reduce spam
+    if(message.toLowerCase().includes('voice')) console.log(`[Voice Debug] ${message}`);
+    // Keep general debug logging for other important messages
+    if(!message.toLowerCase().includes('voice')) console.log(`[DEBUG] ${message}`);
 });
 
 // Load default extractors
