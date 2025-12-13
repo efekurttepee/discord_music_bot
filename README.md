@@ -43,26 +43,6 @@
   - Smart queue system with history
   - Beautiful embed messages with progress bars
 
-### 🚀 Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/flux-music-bot.git
-cd flux-music-bot
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env and add your tokens
-
-# Start the bot
-npm start
-# For development with auto-restart
-npm run dev
-```
-
 ### 📸 Screenshots
 
 ![Flux Bot Interface](https://via.placeholder.com/800x400?text=Flux+Music+Bot+Interface)
@@ -80,20 +60,6 @@ npm run dev
 | `/skip` | Skip the current track |
 | `/queue` | Show the current music queue |
 | `/nowplaying` | Display information about the currently playing track |
-
-### 🔧 Configuration
-
-1. **Discord Bot Setup**
-   - Create a bot at [Discord Developer Portal](https://discord.com/developers/applications)
-   - Enable these intents: Server Members, Message Content
-   - Invite bot with permissions: Connect, Speak, Send Messages, Use Slash Commands
-
-2. **Spotify API Setup**
-   - Get free API keys from [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-   - Add `http://localhost:3000/callback` as a redirect URI
-
-3. **Apple Music**
-   - No setup required! Uses automatic bridging via discord-player
 
 ### 📜 License
 
@@ -137,26 +103,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
   - Geçmişle akıllı kuyruk sistemi
   - İlerleme çubuklarıyla güzel gömülü mesajlar
 
-### 🚀 Kurulum
-
-```bash
-# Depoyu klonlayın
-git clone https://github.com/kullaniciadiniz/flux-music-bot.git
-cd flux-music-bot
-
-# Bağımlılıkları yükleyin
-npm install
-
-# Ortam değişkenlerini ayarlayın
-cp .env.example .env
-# .env dosyasını düzenleyin ve token'larınızı ekleyin
-
-# Botu başlatın
-npm start
-# Geliştirme için otomatik yeniden başlatma
-npm run dev
-```
-
 ### 📸 Ekran Görüntüleri
 
 ![Flux Bot Arayüzü](https://via.placeholder.com/800x400?text=Flux+Müzik+Bot+Arayüzü)
@@ -174,20 +120,6 @@ npm run dev
 | `/skip` | Mevcut parçayı atla |
 | `/queue` | Mevcut müzik kuyruğunu göster |
 | `/nowplaying` | Şu anda çalınan parçayla ilgili bilgi göster |
-
-### 🔧 Yapılandırma
-
-1. **Discord Bot Kurulumu**
-   - [Discord Geliştirici Portalı](https://discord.com/developers/applications) adresinden bir bot oluşturun
-   - Bu niyetleri etkinleştirin: Sunucu Üyeleri, Mesaj İçeriği
-   - Botu şu izinlerle davet edin: Bağlan, Konuş, Mesaj Gönder, Slash Komutları Kullan
-
-2. **Spotify API Kurulumu**
-   - [Spotify Geliştirici Paneli](https://developer.spotify.com/dashboard) adresinden ücretsiz API anahtarları alın
-   - `http://localhost:3000/callback` adresini yönlendirme URI'si olarak ekleyin
-
-3. **Apple Music**
-   - Herhangi bir kurulum gerekmez! discord-player üzerinden otomatik köprüleme kullanır
 
 ### 📜 Lisans
 
