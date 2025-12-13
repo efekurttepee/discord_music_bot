@@ -22,11 +22,11 @@ export async function execute(interaction) {
     }
 
     // IMMEDIATELY defer reply to prevent timeout
-    await interaction.deferReply({ fetchReply: true });
+    await interaction.deferReply();
 
     try {
         // Edit the deferred reply
-        const message = await interaction.editReply({ content: '🔄 Sistem yeniden başlatılıyor...' });
+        const message = await interaction.editReply({ content: '🔄 Sistem yeniden başlatılıyor...', fetchReply: true });
 
         // Save restart state to file
         const restartState = {

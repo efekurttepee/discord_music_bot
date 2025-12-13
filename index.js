@@ -309,25 +309,34 @@ client.once('ready', async () => {
         // Initialize Poru INSIDE ready event
         console.log('🔧 Initializing Poru...');
         
+        // Public Lavalink servers - multiple nodes for reliability
         const nodes = [
             {
-                name: 'Public Node 1',
+                name: 'lava-link',
+                host: 'lava.link',
+                port: 80,
+                password: 'anything',
+                secure: false
+            },
+            {
+                name: 'ferguz-node',
                 host: 'lavalink.ferguz.net',
                 port: 443,
                 password: 'youshallnotpass',
                 secure: true
             },
             {
-                name: 'Public Node 2',
-                host: 'lava.link',
-                port: 80,
-                password: 'youshallnotpass',
-                secure: false
+                name: 'oops-wtf',
+                host: 'lavalink.oops.wtf',
+                port: 443,
+                password: 'www.freelavalink.ga',
+                secure: true
             }
         ];
 
         // Create Poru instance
         poru = new Poru(client, nodes, {
+            library: 'discord.js',
             defaultPlatform: 'ytsearch',
             reconnectTries: 5,
             reconnectTimeout: 30000,

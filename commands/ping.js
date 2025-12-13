@@ -5,11 +5,11 @@ export const data = new SlashCommandBuilder()
   .setDescription('Bot gecikmesini kontrol et');
 
 export async function execute(interaction) {
+  const startTime = Date.now();
   const sent = await interaction.reply({ 
-    content: '🏓 Gecikme ölçülüyor...', 
-    fetchReply: true 
+    content: '🏓 Gecikme ölçülüyor...'
   });
-
+  
   const latency = sent.createdTimestamp - interaction.createdTimestamp;
   const apiLatency = Math.round(interaction.client.ws.ping);
 
@@ -22,5 +22,5 @@ export async function execute(interaction) {
     .setColor('#0099ff')
     .setTimestamp();
 
-  await interaction.editReply({ content: null, embeds: [embed] });
+  await sent.edit({ embeds: [embed] });
 }
