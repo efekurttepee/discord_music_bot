@@ -2,7 +2,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 // Force FFmpeg path and YTDL mode for Render.com
-const ffmpegPath = require('ffmpeg-static');
+import ffmpegPath from 'ffmpeg-static';
 process.env.FFMPEG_PATH = ffmpegPath;
 process.env.DP_FORCE_YTDL_MOD = "play-dl";
 
