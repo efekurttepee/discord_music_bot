@@ -19,7 +19,7 @@ export async function execute(interaction) {
     }
 
     // Send restart notification
-    const reply = await interaction.reply({ content: '🔄 System is restarting...', fetchReply: true });
+    const reply = await interaction.reply({ content: '🔄 System is restarting...' }).then(msg => msg.fetch());
 
     // Save restart state to file
     const restartState = {

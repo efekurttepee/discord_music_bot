@@ -20,7 +20,7 @@ import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, REST, Route
 import { Player } from 'discord-player';
 import { DefaultExtractors } from '@discord-player/extractor';
 import dotenv from 'dotenv';
-import { readdirSync } from 'fs';
+import { readdirSync, existsSync, readFileSync, unlinkSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -209,9 +209,9 @@ client.on('ready', async () => {
 
         // Check for restart notification
         const restartStatePath = path.join(__dirname, 'restart_state.json');
-        if (fs.existsSync(restartStatePath)) {
+        if (existsSync(restartStatePath)) {
             try {
-                const restartState = JSON.parse(fs.readFileSync(restartStatePath, 'utf8'));
+                const restartState = JSON.parse(readFileSync(restartStatePath, 'utf8'));
                 const channel = await client.channels.fetch(restartState.channelId);
                 if (channel && channel.isTextBased()) {
                     const message = await channel.messages.fetch(restartState.messageId);
@@ -223,7 +223,7 @@ client.on('ready', async () => {
                 console.error('Failed to update restart notification:', error.message);
             } finally {
                 // Cleanup - delete the restart state file
-                fs.unlinkSync(restartStatePath);
+                unlinkSync(restartStatePath);
             }
         }
     } catch (error) {

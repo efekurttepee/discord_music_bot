@@ -53,15 +53,15 @@ export async function execute(interaction, player) {
     // Add tracks to queue
     if (searchResult.playlist) {
       await queue.addTrack(searchResult.tracks);
-    await interaction.editReply(`✅ Added **${searchResult.tracks.length}** tracks from **${searchResult.playlist.title}** to the queue!`);
-  } else {
-    const track = searchResult.tracks[0];
-    await queue.addTrack(track);
-    await interaction.editReply(`✅ Added **${track.title}** to the queue!`);
-  }
+      await interaction.editReply(`✅ Added **${searchResult.tracks.length}** tracks from **${searchResult.playlist.title}** to the queue!`);
+    } else {
+      const track = searchResult.tracks[0];
+      await queue.addTrack(track);
+      await interaction.editReply(`✅ Added **${track.title}** to the queue!`);
+    }
 
     // Start playing if not already playing
-    if (!queue.isPlaying()) {
+    if (!queue.node.isPlaying()) {
       await queue.node.play();
     }
 
