@@ -97,7 +97,8 @@ player.events.on('error', (queue, error) => {
 });
 
 player.events.on('playerError', (queue, error) => {
-    console.log(`[${queue?.guild?.name || 'Unknown'}] Error emitted from the player: ${error.message}`);
+    console.log(`[Player Error] ${error.message}`);
+    console.log(`[Player Error Details] ${JSON.stringify(error, null, 2)}`);
 });
 
 // Command collection
