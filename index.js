@@ -1,6 +1,11 @@
 // SSL Certificate Fix - Must be at the very top before any imports
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+// Force FFmpeg path and YTDL mode for Render.com
+const ffmpegPath = require('ffmpeg-static');
+process.env.FFMPEG_PATH = ffmpegPath;
+process.env.DP_FORCE_YTDL_MOD = "play-dl";
+
 import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, SlashCommandStringOption, SlashCommandSubcommandBuilder, REST, Routes } from 'discord.js';
 import { Player } from 'discord-player';
 import { DefaultExtractors } from '@discord-player/extractor';
@@ -49,7 +54,7 @@ const client = new Client({
 // Audio dependency check for Render.com
 console.log('Audio dependency check: opusscript and libsodium-wrappers installed.');
 
-// Create player instance with optimized settings
+// Create player instance with optimized settings and debug logging
 const player = new Player(client, {
   ytdlOptions: {
     quality: 'highestaudio',
@@ -65,6 +70,11 @@ const player = new Player(client, {
   connectionTimeout: 30000, // 30s connection timeout
   lagMonitor: 60000,        // 60s lag monitoring
   autoSelfDeaf: true        // Auto-deafen to prevent echo
+});
+
+// Add debug logging for audio playback
+player.events.on('debug', (queue, message) => {
+  console.log(`[DEBUG] ${message}`);
 });
 
 // Load default extractors using the new loadMulti method
