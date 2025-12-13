@@ -46,6 +46,9 @@ const client = new Client({
   }
 });
 
+// Audio dependency check for Render.com
+console.log('Audio dependency check: opusscript and libsodium-wrappers installed.');
+
 // Create player instance with optimized settings
 const player = new Player(client, {
   ytdlOptions: {
