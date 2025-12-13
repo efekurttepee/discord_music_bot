@@ -10,19 +10,19 @@ export const data = new SlashCommandBuilder()
       .setMinValue(0)
       .setMaxValue(200));
 
-export async function execute(interaction, player) {
+export async function execute(interaction, poru) {
   await interaction.deferReply();
 
-  const queue = player.nodes.get(interaction.guild);
+  const player = poru.players.get(interaction.guild.id);
 
-  if (!queue || !queue.node.isPlaying()) {
+  if (!player || !player.queue.current) {
     return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
   const volume = interaction.options.getInteger('level');
 
   try {
-    queue.node.setVolume(volume);
+    player.setVolume(volume);
     await interaction.editReply(`🔊 Ses seviyesi **${volume}%** olarak ayarlandı!`);
   } catch (error) {
     console.error('Volume command error:', error);

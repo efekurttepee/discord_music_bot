@@ -4,23 +4,18 @@ export const data = new SlashCommandBuilder()
   .setName('pause')
   .setDescription('Müziği duraklat/devam ettir');
 
-export async function execute(interaction, player) {
+export async function execute(interaction, poru) {
   await interaction.deferReply();
 
-  const queue = player.nodes.get(interaction.guild);
+  const player = poru.players.get(interaction.guild.id);
 
-  if (!queue || !queue.node.isPlaying()) {
+  if (!player || !player.queue.current) {
     return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
   try {
-    if (queue.node.isPaused()) {
-      queue.node.resume();
-      await interaction.editReply('▶️ Müzik devam ediyor!');
-    } else {
-      queue.node.pause();
-      await interaction.editReply('⏸️ Müzik duraklatıldı!');
-    }
+    player.pause(!player.isPaused);
+    await interaction.editReply(player.isPaused ? '⏸️ Müzik duraklatıldı!' : '▶️ Müzik devam ediyor!');
   } catch (error) {
     console.error('Pause command error:', error);
     await interaction.editReply(`❌ Hata: ${error.message}`);

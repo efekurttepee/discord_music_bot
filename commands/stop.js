@@ -4,17 +4,17 @@ export const data = new SlashCommandBuilder()
   .setName('stop')
   .setDescription('Müziği durdur ve kuyruğu temizle');
 
-export async function execute(interaction, player) {
+export async function execute(interaction, poru) {
   await interaction.deferReply();
 
-  const queue = player.nodes.get(interaction.guild);
+  const player = poru.players.get(interaction.guild.id);
 
-  if (!queue || !queue.node.isPlaying()) {
+  if (!player || !player.queue.current) {
     return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
   try {
-    queue.delete();
+    await player.destroy();
     await interaction.editReply('⏹️ Müzik durduruldu ve kuyruk temizlendi!');
   } catch (error) {
     console.error('Stop command error:', error);

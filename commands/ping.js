@@ -4,7 +4,7 @@ export const data = new SlashCommandBuilder()
   .setName('ping')
   .setDescription('Bot gecikmesini kontrol et');
 
-export async function execute(interaction, player) {
+export async function execute(interaction) {
   const sent = await interaction.reply({ 
     content: '🏓 Gecikme ölçülüyor...', 
     fetchReply: true 

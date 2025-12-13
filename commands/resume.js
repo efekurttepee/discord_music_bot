@@ -4,21 +4,21 @@ export const data = new SlashCommandBuilder()
   .setName('resume')
   .setDescription('Müziği devam ettir');
 
-export async function execute(interaction, player) {
+export async function execute(interaction, poru) {
   await interaction.deferReply();
 
-  const queue = player.nodes.get(interaction.guild);
+  const player = poru.players.get(interaction.guild.id);
 
-  if (!queue) {
+  if (!player) {
     return await interaction.editReply('❌ Bu sunucuda çalan müzik yok!');
   }
 
-  if (!queue.node.isPaused()) {
+  if (!player.isPaused) {
     return await interaction.editReply('❌ Müzik zaten çalıyor!');
   }
 
   try {
-    queue.node.resume();
+    player.pause(false);
     await interaction.editReply('▶️ Müzik devam ediyor!');
   } catch (error) {
     console.error('Resume command error:', error);

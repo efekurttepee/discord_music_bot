@@ -1,30 +1,9 @@
 // SSL Certificate Fix - Must be at the very top before any imports
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-// Force FFmpeg path and play-dl engine
-import ffmpegPath from 'ffmpeg-static';
-process.env.FFMPEG_PATH = ffmpegPath;
-process.env.DP_FORCE_YTDL_MOD = "play-dl";
-
-// YouTube Cookie Authentication and Optimization
-if (process.env.YOUTUBE_COOKIE) {
-    process.env.DP_FORCE_YTDL_COOKIE = process.env.YOUTUBE_COOKIE;
-    process.env.YTDL_NO_UPDATE = 'true';
-}
-
-// Spotify API Configuration
-if (process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
-    process.env.SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-    process.env.SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-}
-
-// Import play-dl explicitly to ensure it's available
-import 'play-dl';
-
 // Core imports using ES Modules
-import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, REST, Routes } from 'discord.js';
-import { Player } from 'discord-player';
-import { DefaultExtractors } from '@discord-player/extractor';
+import { Client, GatewayIntentBits, Collection, SlashCommandBuilder, REST, Routes, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { Poru } from 'poru';
 import dotenv from 'dotenv';
 import { readdirSync, existsSync, readFileSync, unlinkSync } from 'fs';
 import path from 'path';
@@ -51,7 +30,7 @@ if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
     }
 }
 
-// Create Discord client with enhanced settings
+// Create Discord client
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -71,82 +50,146 @@ const client = new Client({
     }
 });
 
-// Audio dependency check
-console.log('✅ Audio dependencies: opusscript and libsodium-wrappers installed');
-
-// Create player instance with play-dl configuration
-const player = new Player(client, {
-    ytdlOptions: {
-        quality: 'highestaudio',
-        highWaterMark: 1 << 25,
-        dlChunkSize: 0,
-        liveBuffer: 20000,
-        requestOptions: {
-            headers: {
-                cookie: process.env.YOUTUBE_COOKIE || '',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-            }
-        }
+// Initialize Poru client
+const poru = new Poru(client, [
+    {
+        name: 'Public Node 1',
+        host: 'lavalink.ferguz.net',
+        port: 443,
+        password: 'youshallnotpass',
+        secure: true
     },
-    connectionTimeout: 30000,
-    lagMonitor: 60000,
-    autoSelfDeaf: true,
-    skipFFmpeg: false
-});
-
-// Debug logging (filtered to reduce spam)
-player.events.on('debug', (queue, message) => {
-    const msg = message?.toString() || '';
-    if (msg.toLowerCase().includes('voice') || msg.toLowerCase().includes('connection')) {
-        console.log(`[Voice Debug] ${msg}`);
+    {
+        name: 'Public Node 2',
+        host: 'lava.link',
+        port: 80,
+        password: 'youshallnotpass',
+        secure: false
     }
+], {
+    defaultPlatform: 'ytsearch',
+    reconnectTries: 5,
+    reconnectTimeout: 30000,
+    resumeKey: 'DiscordMusicBot',
+    resumeTimeout: 300
 });
 
-// Load default extractors (includes YouTube, Spotify, SoundCloud, etc.)
-try {
-    await player.extractors.loadMulti(DefaultExtractors);
-    console.log('✅ Audio extractors loaded successfully');
-} catch (error) {
-    console.error('❌ Failed to load extractors:', error.message);
-}
+// Attach Poru to client for easy access
+client.poru = poru;
 
-// Error handling
-player.events.on('error', (queue, error) => {
-    console.error(`[${queue?.guild?.name || 'Unknown'}] Queue error:`, error.message);
+// Poru Event: Node Connect
+poru.on('nodeConnect', (node) => {
+    console.log(`✅ Lavalink connected! Node: ${node.name}`);
 });
 
-player.events.on('playerError', (queue, error) => {
-    console.error(`[Player Error] ${error.message}`);
-    if (error.stack) {
-        console.error(`[Player Error Stack] ${error.stack}`);
-    }
+// Poru Event: Node Disconnect
+poru.on('nodeDisconnect', (node, reason) => {
+    console.error(`❌ Lavalink disconnected! Node: ${node.name}, Reason: ${reason}`);
+    console.log('🔄 Attempting to reconnect...');
 });
 
-// Player events
-player.events.on('playerStart', async (queue, track) => {
+// Poru Event: Node Error
+poru.on('nodeError', (node, error) => {
+    console.error(`❌ Lavalink node error! Node: ${node.name}, Error:`, error);
+    console.log('🔄 Trying other nodes...');
+});
+
+// Poru Event: Track Start
+poru.on('trackStart', (player, track) => {
+    const channel = player.textChannel;
+    if (!channel) return;
+
     try {
-        const { handlePlayerStart } = await import('./events/playerStart.js');
-        await handlePlayerStart(queue, track);
+        const queue = player.queue;
+        const progressBar = player.createProgressBar();
+
+        const embed = new EmbedBuilder()
+            .setTitle('🎵 Şu An Çalıyor')
+            .setDescription(`[${track.info.title}](${track.info.uri})`)
+            .addFields(
+                { name: '🎤 Sanatçı', value: track.info.author || 'Bilinmiyor', inline: true },
+                { name: '⏱️ Süre', value: formatDuration(track.info.length) || 'Bilinmiyor', inline: true },
+                { name: '👤 İsteyen', value: track.requester?.username || 'Bilinmiyor', inline: true },
+                { name: '🔊 Ses', value: `${player.volume}%`, inline: true },
+                { name: '📊 İlerleme', value: progressBar || 'Yükleniyor...', inline: false }
+            )
+            .setColor('#0099ff')
+            .setThumbnail(track.info.image)
+            .setFooter({ text: `Kaynak: ${track.info.sourceName || 'Bilinmiyor'}` });
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('pause')
+                    .setLabel(player.isPaused ? '▶️ Devam Et' : '⏸️ Duraklat')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('skip')
+                    .setLabel('⏭️ Atla')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('shuffle')
+                    .setLabel('🔀 Karıştır')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('loop')
+                    .setLabel('🔁 Döngü')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('stop')
+                    .setLabel('🛑 Durdur')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        channel.send({ embeds: [embed], components: [row] })
+            .then(msg => {
+                player.data.set('nowPlayingMessage', msg);
+            })
+            .catch(error => {
+                console.error('Failed to send now playing message:', error);
+            });
     } catch (error) {
-        console.error('Player start event error:', error);
+        console.error('Error in trackStart event:', error);
     }
 });
 
-player.events.on('audioTrackAdd', (queue, track) => {
-    console.log(`✅ Track added to queue: ${track.title}`);
+// Poru Event: Queue End
+poru.on('queueEnd', (player) => {
+    const channel = player.textChannel;
+    if (channel) {
+        channel.send('✅ Kuyruk bitti!').catch(() => {});
+    }
 });
 
-player.events.on('disconnect', (queue) => {
-    console.log(`🔌 Disconnected from voice channel in ${queue.guild.name}`);
+// Poru Event: Track Error
+poru.on('trackError', (player, track, error) => {
+    console.error('Track error:', error);
+    const channel = player.textChannel;
+    if (channel) {
+        channel.send(`❌ Şarkı çalınırken hata oluştu: ${error.message || 'Bilinmeyen hata'}`).catch(() => {});
+    }
 });
 
-player.events.on('emptyChannel', (queue) => {
-    console.log(`⚠️ Channel is empty in ${queue.guild.name}`);
+// Poru Event: Player Destroy
+poru.on('playerDestroy', (player) => {
+    const channel = player.textChannel;
+    if (channel) {
+        channel.send('🛑 Müzik durduruldu ve kuyruk temizlendi!').catch(() => {});
+    }
 });
 
-player.events.on('emptyQueue', (queue) => {
-    console.log(`✅ Queue finished in ${queue.guild.name}`);
-});
+// Helper function to format duration
+function formatDuration(ms) {
+    if (!ms || isNaN(ms)) return null;
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor((ms / (1000 * 60 * 60)));
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
 
 // Command collection
 client.commands = new Collection();
@@ -172,7 +215,6 @@ for (const file of commandFiles) {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    // Check if interaction is still valid (not outdated)
     if (interaction.isCommand() && interaction.commandName) {
         const command = client.commands.get(interaction.commandName);
 
@@ -192,14 +234,13 @@ client.on('interactionCreate', async interaction => {
         }
 
         try {
-            await command.execute(interaction, player);
+            await command.execute(interaction, poru);
         } catch (error) {
             console.error('Command execution error:', error);
             
-            // Handle specific Discord errors
-            if (error.code === 10062 || error.message.includes('interaction') && error.message.includes('not found')) {
+            if (error.code === 10062 || (error.message.includes('interaction') && error.message.includes('not found'))) {
                 console.warn('⚠️ Interaction expired or not found');
-                return; // Don't try to reply to expired interactions
+                return;
             }
 
             try {
@@ -228,19 +269,73 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
 
     try {
-        const { handleButtonInteraction } = await import('./events/interactionCreate.js');
-        await handleButtonInteraction(interaction, player);
+        const player = poru.players.get(interaction.guild.id);
+        
+        if (!player || !player.queue.current) {
+            return await interaction.reply({
+                content: '❌ Bu sunucuda çalan müzik yok!',
+                ephemeral: true
+            });
+        }
+
+        switch (interaction.customId) {
+            case 'pause':
+                player.pause(!player.isPaused);
+                await interaction.reply({ 
+                    content: player.isPaused ? '⏸️ Müzik duraklatıldı!' : '▶️ Müzik devam ediyor!', 
+                    ephemeral: true 
+                });
+                break;
+
+            case 'skip':
+                if (player.queue.length === 0 && player.loop === 'NONE') {
+                    await interaction.reply({ content: '❌ Kuyrukta atlanacak şarkı yok!', ephemeral: true });
+                } else {
+                    await player.stop();
+                    await interaction.reply({ content: '⏭️ Şarkı atlandı!', ephemeral: true });
+                }
+                break;
+
+            case 'shuffle':
+                if (player.queue.length <= 1) {
+                    await interaction.reply({ content: '❌ Kuyrukta karıştırılacak şarkı yok!', ephemeral: true });
+                } else {
+                    player.queue.shuffle();
+                    await interaction.reply({ content: '🔀 Kuyruk karıştırıldı!', ephemeral: true });
+                }
+                break;
+
+            case 'loop':
+                const loopMode = player.loop;
+                if (loopMode === 'NONE') {
+                    player.setLoop('TRACK');
+                    await interaction.reply({ content: '🔁 Döngü modu: Şarkı', ephemeral: true });
+                } else if (loopMode === 'TRACK') {
+                    player.setLoop('QUEUE');
+                    await interaction.reply({ content: '🔁 Döngü modu: Kuyruk', ephemeral: true });
+                } else {
+                    player.setLoop('NONE');
+                    await interaction.reply({ content: '🔁 Döngü modu: Kapalı', ephemeral: true });
+                }
+                break;
+
+            case 'stop':
+                await player.destroy();
+                await interaction.reply({ content: '🛑 Müzik durduruldu ve kuyruk temizlendi!', ephemeral: true });
+                break;
+
+            default:
+                await interaction.reply({ content: '❌ Bilinmeyen buton etkileşimi', ephemeral: true });
+        }
     } catch (error) {
         console.error('Button interaction error:', error);
-        if (!interaction.replied) {
-            try {
-                await interaction.reply({
-                    content: `❌ Bir hata oluştu: ${error.message}`,
-                    ephemeral: true
-                });
-            } catch (replyError) {
-                console.error('Reply error:', replyError);
-            }
+        try {
+            await interaction.reply({
+                content: `❌ Hata: ${error.message}`,
+                ephemeral: true
+            });
+        } catch (replyError) {
+            console.error('Reply error:', replyError);
         }
     }
 });
@@ -296,14 +391,23 @@ if (!process.env.DISCORD_TOKEN) {
     process.exit(1);
 }
 
-client.login(process.env.DISCORD_TOKEN)
+const token = process.env.DISCORD_TOKEN.trim();
+const tokenLength = token.length;
+const tokenPreview = tokenLength > 10 ? `${token.substring(0, 5)}...${token.substring(tokenLength - 5)}` : '***';
+
+console.log(`🔑 Token detected (length: ${tokenLength}, preview: ${tokenPreview})`);
+
+if (tokenLength < 50 || tokenLength > 80) {
+    console.warn(`⚠️ Token length (${tokenLength}) seems unusual. Discord bot tokens are usually 59-72 characters.`);
+}
+
+client.login(token)
     .then(() => {
         console.log('✅ Bot connecting to Discord...');
     })
     .catch(error => {
         console.error('❌ Failed to connect to Discord:', error.message);
-        console.error('🔹 Check your internet connection');
-        console.error('🔹 Verify your Discord token in .env file');
+        console.error('🔹 Get a new token from: https://discord.com/developers/applications');
         process.exit(1);
     });
 
@@ -318,7 +422,6 @@ client.once('ready', async () => {
         console.log('🔄 Refreshing application (/) commands...');
         
         try {
-            // Register commands globally with retry
             const data = await rest.put(
                 Routes.applicationCommands(client.user.id),
                 { body: commands }
@@ -327,12 +430,9 @@ client.once('ready', async () => {
             console.log(`✅ Successfully reloaded ${commands.length} application (/) commands.`);
             console.log(`📝 Registered commands: ${commands.map(c => c.name).join(', ')}`);
             
-            // Wait a bit for Discord to propagate commands
-            console.log('⏳ Waiting 2 seconds for Discord to sync commands...');
             await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (commandError) {
             console.error('❌ Failed to register commands:', commandError);
-            // Try again after a delay
             setTimeout(async () => {
                 try {
                     await rest.put(
@@ -367,7 +467,7 @@ client.once('ready', async () => {
             }
         }
 
-        console.log('🎵 Bot is ready to play music!');
+        console.log('🎵 Bot is ready to play music with Lavalink!');
     } catch (error) {
         console.error('❌ Failed to register slash commands:', error);
     }
@@ -388,6 +488,8 @@ app.get('/health', (req, res) => {
         status: 'healthy',
         bot: client.user ? client.user.tag : 'Not connected',
         guilds: client.guilds.cache.size,
+        lavalinkNodes: poru.nodes.size,
+        connectedNodes: poru.nodes.filter(node => node.isConnected).size,
         uptime: process.uptime(),
         timestamp: new Date().toISOString()
     });
@@ -405,8 +507,7 @@ process.on('unhandledRejection', error => {
 
 process.on('uncaughtException', error => {
     console.error('Uncaught exception:', error);
-    // Don't exit, let the bot try to recover
 });
 
 // Export for use in other files
-export { client, player, app };
+export { client, poru, app, formatDuration };
