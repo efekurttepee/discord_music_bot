@@ -20,8 +20,18 @@ export async function execute(interaction, player) {
   }
 
   try {
+    // Search for the track first
+    const searchResult = await player.search(query, {
+      requestedBy: interaction.user,
+      searchEngine: 'auto'
+    });
+
+    if (!searchResult.hasTracks()) {
+      return await interaction.editReply('No tracks found for your query!');
+    }
+
     // Create queue
-    const queue = await player.nodes.create(interaction.guild, {
+    let queue = player.nodes.create(interaction.guild, {
       metadata: {
         channel: interaction.channel,
         client: interaction.guild.members.me,
@@ -35,28 +45,18 @@ export async function execute(interaction, player) {
       selfDeaf: true
     });
 
-    // Connect to voice channel
+    // Connect to voice channel if not connected
     if (!queue.connection) {
       await queue.connect(channel);
     }
 
-    // Search for the track
-    const searchResult = await player.search(query, {
-      requestedBy: interaction.user,
-      searchEngine: 'auto'
-    });
-
-    if (!searchResult.hasTracks()) {
-      return await interaction.editReply('No tracks found for your query!');
-    }
-
     // Add tracks to queue
     if (searchResult.playlist) {
-      await queue.addTrack(searchResult.tracks);
+      searchResult.tracks.forEach(track => queue.addTrack(track));
       await interaction.editReply(`✅ Added **${searchResult.tracks.length}** tracks from **${searchResult.playlist.title}** to the queue!`);
     } else {
       const track = searchResult.tracks[0];
-      await queue.addTrack(track);
+      queue.addTrack(track);
       await interaction.editReply(`✅ Added **${track.title}** to the queue!`);
     }
 
