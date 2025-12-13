@@ -111,7 +111,7 @@ player.events.on('playerStart', async (queue, track) => {
   await handlePlayerStart(queue, track);
 });
 
-// Interaction handler
+// Interaction handler with smart error handling for Render.com
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -122,11 +122,19 @@ client.on('interactionCreate', async interaction => {
   try {
     await command.execute(interaction, player);
   } catch (error) {
-    console.error(error);
-    await interaction.reply({
-      content: 'There was an error while executing this command!',
-      ephemeral: true
-    });
+    console.error('Command execution error:', error);
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+      } else {
+        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+      }
+    } catch (followUpError) {
+      // Ignore interaction errors (already acknowledged or unknown)
+      if (followUpError.code !== 10062) {
+        console.error('Follow-up error:', followUpError);
+      }
+    }
   }
 });
 
@@ -205,6 +213,15 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Keep-alive server running on port ${PORT}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+});
+
+// Global error handlers for Render.com stability
+process.on('unhandledRejection', error => {
+  console.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+  console.error('Uncaught exception:', error);
 });
 
 // Export for use in other files
