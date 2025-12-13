@@ -50,133 +50,8 @@ const client = new Client({
     }
 });
 
-// Initialize Poru client
-const poru = new Poru(client, [
-    {
-        name: 'Public Node 1',
-        host: 'lavalink.ferguz.net',
-        port: 443,
-        password: 'youshallnotpass',
-        secure: true
-    },
-    {
-        name: 'Public Node 2',
-        host: 'lava.link',
-        port: 80,
-        password: 'youshallnotpass',
-        secure: false
-    }
-], {
-    defaultPlatform: 'ytsearch',
-    reconnectTries: 5,
-    reconnectTimeout: 30000,
-    resumeKey: 'DiscordMusicBot',
-    resumeTimeout: 300
-});
-
-// Attach Poru to client for easy access
-client.poru = poru;
-
-// Poru Event: Node Connect
-poru.on('nodeConnect', (node) => {
-    console.log(`✅ Lavalink connected! Node: ${node.name}`);
-});
-
-// Poru Event: Node Disconnect
-poru.on('nodeDisconnect', (node, reason) => {
-    console.error(`❌ Lavalink disconnected! Node: ${node.name}, Reason: ${reason}`);
-    console.log('🔄 Attempting to reconnect...');
-});
-
-// Poru Event: Node Error
-poru.on('nodeError', (node, error) => {
-    console.error(`❌ Lavalink node error! Node: ${node.name}, Error:`, error);
-    console.log('🔄 Trying other nodes...');
-});
-
-// Poru Event: Track Start
-poru.on('trackStart', (player, track) => {
-    const channel = player.textChannel;
-    if (!channel) return;
-
-    try {
-        const queue = player.queue;
-        const progressBar = player.createProgressBar();
-
-        const embed = new EmbedBuilder()
-            .setTitle('🎵 Şu An Çalıyor')
-            .setDescription(`[${track.info.title}](${track.info.uri})`)
-            .addFields(
-                { name: '🎤 Sanatçı', value: track.info.author || 'Bilinmiyor', inline: true },
-                { name: '⏱️ Süre', value: formatDuration(track.info.length) || 'Bilinmiyor', inline: true },
-                { name: '👤 İsteyen', value: track.requester?.username || 'Bilinmiyor', inline: true },
-                { name: '🔊 Ses', value: `${player.volume}%`, inline: true },
-                { name: '📊 İlerleme', value: progressBar || 'Yükleniyor...', inline: false }
-            )
-            .setColor('#0099ff')
-            .setThumbnail(track.info.image)
-            .setFooter({ text: `Kaynak: ${track.info.sourceName || 'Bilinmiyor'}` });
-
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('pause')
-                    .setLabel(player.isPaused ? '▶️ Devam Et' : '⏸️ Duraklat')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('skip')
-                    .setLabel('⏭️ Atla')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('shuffle')
-                    .setLabel('🔀 Karıştır')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('loop')
-                    .setLabel('🔁 Döngü')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('stop')
-                    .setLabel('🛑 Durdur')
-                    .setStyle(ButtonStyle.Danger)
-            );
-
-        channel.send({ embeds: [embed], components: [row] })
-            .then(msg => {
-                player.data.set('nowPlayingMessage', msg);
-            })
-            .catch(error => {
-                console.error('Failed to send now playing message:', error);
-            });
-    } catch (error) {
-        console.error('Error in trackStart event:', error);
-    }
-});
-
-// Poru Event: Queue End
-poru.on('queueEnd', (player) => {
-    const channel = player.textChannel;
-    if (channel) {
-        channel.send('✅ Kuyruk bitti!').catch(() => {});
-    }
-});
-
-// Poru Event: Track Error
-poru.on('trackError', (player, track, error) => {
-    console.error('Track error:', error);
-    const channel = player.textChannel;
-    if (channel) {
-        channel.send(`❌ Şarkı çalınırken hata oluştu: ${error.message || 'Bilinmeyen hata'}`).catch(() => {});
-    }
-});
-
-// Poru Event: Player Destroy
-poru.on('playerDestroy', (player) => {
-    const channel = player.textChannel;
-    if (channel) {
-        channel.send('🛑 Müzik durduruldu ve kuyruk temizlendi!').catch(() => {});
-    }
-});
+// Poru will be initialized in the ready event
+let poru = null;
 
 // Helper function to format duration
 function formatDuration(ms) {
@@ -234,7 +109,14 @@ client.on('interactionCreate', async interaction => {
         }
 
         try {
-            await command.execute(interaction, poru);
+            // Ensure Poru is initialized
+            if (!client.poru && !poru) {
+                return await interaction.reply({
+                    content: '❌ Müzik sistemi henüz hazır değil! Lütfen birkaç saniye bekleyip tekrar deneyin.',
+                    ephemeral: true
+                });
+            }
+            await command.execute(interaction, client.poru || poru);
         } catch (error) {
             console.error('Command execution error:', error);
             
@@ -269,7 +151,14 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
 
     try {
-        const player = poru.players.get(interaction.guild.id);
+        const poruInstance = client.poru || poru;
+        if (!poruInstance) {
+            return await interaction.reply({
+                content: '❌ Müzik sistemi henüz hazır değil! Lütfen birkaç saniye bekleyip tekrar deneyin.',
+                ephemeral: true
+            });
+        }
+        const player = poruInstance.players.get(interaction.guild.id);
         
         if (!player || !player.queue.current) {
             return await interaction.reply({
@@ -417,6 +306,142 @@ client.once('ready', async () => {
         console.log(`✅ Logged in as ${client.user.tag}!`);
         console.log(`🌍 Serving ${client.guilds.cache.size} guild(s)`);
 
+        // Initialize Poru INSIDE ready event
+        console.log('🔧 Initializing Poru...');
+        
+        const nodes = [
+            {
+                name: 'Public Node 1',
+                host: 'lavalink.ferguz.net',
+                port: 443,
+                password: 'youshallnotpass',
+                secure: true
+            },
+            {
+                name: 'Public Node 2',
+                host: 'lava.link',
+                port: 80,
+                password: 'youshallnotpass',
+                secure: false
+            }
+        ];
+
+        // Create Poru instance
+        poru = new Poru(client, nodes, {
+            defaultPlatform: 'ytsearch',
+            reconnectTries: 5,
+            reconnectTimeout: 30000,
+            resumeKey: 'DiscordMusicBot',
+            resumeTimeout: 300
+        });
+
+        // Attach Poru to client for easy access
+        client.poru = poru;
+
+        // Poru Event: Node Connect
+        poru.on('nodeConnect', (node) => {
+            console.log(`✅ Lavalink connected! Node: ${node.name}`);
+        });
+
+        // Poru Event: Node Disconnect
+        poru.on('nodeDisconnect', (node, reason) => {
+            console.error(`❌ Lavalink disconnected! Node: ${node.name}, Reason: ${reason}`);
+            console.log('🔄 Attempting to reconnect...');
+        });
+
+        // Poru Event: Node Error
+        poru.on('nodeError', (node, error) => {
+            console.error(`❌ Lavalink node error! Node: ${node.name}, Error:`, error);
+            console.log('🔄 Trying other nodes...');
+        });
+
+        // Poru Event: Track Start
+        poru.on('trackStart', (player, track) => {
+            const channel = player.textChannel ? client.channels.cache.get(player.textChannel) : null;
+            if (!channel) return;
+
+            try {
+                const progressBar = player.createProgressBar();
+
+                const embed = new EmbedBuilder()
+                    .setTitle('🎵 Şu An Çalıyor')
+                    .setDescription(`[${track.info.title}](${track.info.uri})`)
+                    .addFields(
+                        { name: '🎤 Sanatçı', value: track.info.author || 'Bilinmiyor', inline: true },
+                        { name: '⏱️ Süre', value: formatDuration(track.info.length) || 'Bilinmiyor', inline: true },
+                        { name: '👤 İsteyen', value: track.requester?.username || 'Bilinmiyor', inline: true },
+                        { name: '🔊 Ses', value: `${player.volume}%`, inline: true },
+                        { name: '📊 İlerleme', value: progressBar || 'Yükleniyor...', inline: false }
+                    )
+                    .setColor('#0099ff')
+                    .setThumbnail(track.info.image)
+                    .setFooter({ text: `Kaynak: ${track.info.sourceName || 'Bilinmiyor'}` });
+
+                const row = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('pause')
+                            .setLabel(player.isPaused ? '▶️ Devam Et' : '⏸️ Duraklat')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('skip')
+                            .setLabel('⏭️ Atla')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('shuffle')
+                            .setLabel('🔀 Karıştır')
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId('loop')
+                            .setLabel('🔁 Döngü')
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId('stop')
+                            .setLabel('🛑 Durdur')
+                            .setStyle(ButtonStyle.Danger)
+                    );
+
+                channel.send({ embeds: [embed], components: [row] })
+                    .then(msg => {
+                        if (player.data) {
+                            player.data.set('nowPlayingMessage', msg);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to send now playing message:', error);
+                    });
+            } catch (error) {
+                console.error('Error in trackStart event:', error);
+            }
+        });
+
+        // Poru Event: Queue End
+        poru.on('queueEnd', (player) => {
+            const channel = player.textChannel ? client.channels.cache.get(player.textChannel) : null;
+            if (channel) {
+                channel.send('✅ Kuyruk bitti!').catch(() => {});
+            }
+        });
+
+        // Poru Event: Track Error
+        poru.on('trackError', (player, track, error) => {
+            console.error('Track error:', error);
+            const channel = player.textChannel ? client.channels.cache.get(player.textChannel) : null;
+            if (channel) {
+                channel.send(`❌ Şarkı çalınırken hata oluştu: ${error.message || 'Bilinmeyen hata'}`).catch(() => {});
+            }
+        });
+
+        // Poru Event: Player Destroy
+        poru.on('playerDestroy', (player) => {
+            const channel = player.textChannel ? client.channels.cache.get(player.textChannel) : null;
+            if (channel) {
+                channel.send('🛑 Müzik durduruldu ve kuyruk temizlendi!').catch(() => {});
+            }
+        });
+
+        console.log('✅ Poru initialized successfully!');
+
         const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
         
         console.log('🔄 Refreshing application (/) commands...');
@@ -488,8 +513,8 @@ app.get('/health', (req, res) => {
         status: 'healthy',
         bot: client.user ? client.user.tag : 'Not connected',
         guilds: client.guilds.cache.size,
-        lavalinkNodes: poru.nodes.size,
-        connectedNodes: poru.nodes.filter(node => node.isConnected).size,
+        lavalinkNodes: poru ? poru.nodes.size : 0,
+        connectedNodes: poru ? poru.nodes.filter(node => node.isConnected).size : 0,
         uptime: process.uptime(),
         timestamp: new Date().toISOString()
     });
@@ -510,4 +535,4 @@ process.on('uncaughtException', error => {
 });
 
 // Export for use in other files
-export { client, poru, app, formatDuration };
+export { client, app, formatDuration };
