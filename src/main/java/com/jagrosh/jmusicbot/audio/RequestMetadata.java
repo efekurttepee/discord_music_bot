@@ -15,7 +15,7 @@
  */
 package com.jagrosh.jmusicbot.audio;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import pw.chew.jdautilities.command.CommandEvent;
 import com.jagrosh.jmusicbot.utils.TimeUtil;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.entities.User;

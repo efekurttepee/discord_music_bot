@@ -15,10 +15,10 @@
  */
 package com.jagrosh.jmusicbot;
 
-import com.jagrosh.jdautilities.command.CommandClient;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
-import com.jagrosh.jdautilities.examples.command.*;
+import pw.chew.jdautilities.command.CommandClient;
+import pw.chew.jdautilities.command.CommandClientBuilder;
+import pw.chew.jdautilities.commons.waiter.EventWaiter;
+import pw.chew.jdautilities.examples.command.*;
 import com.jagrosh.jmusicbot.commands.admin.*;
 import com.jagrosh.jmusicbot.commands.dj.*;
 import com.jagrosh.jmusicbot.commands.general.*;

@@ -16,8 +16,8 @@
 package com.jagrosh.jmusicbot.commands.admin;
 
 import java.util.List;
-import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.jdautilities.commons.utils.FinderUtil;
+import pw.chew.jdautilities.command.CommandEvent;
+import pw.chew.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.commands.AdminCommand;
 import com.jagrosh.jmusicbot.settings.Settings;

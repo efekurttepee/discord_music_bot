@@ -15,7 +15,7 @@
  */
 package com.jagrosh.jmusicbot.commands;
 
-import com.jagrosh.jdautilities.command.Command;
+import pw.chew.jdautilities.command.Command;
 
 /**
  *

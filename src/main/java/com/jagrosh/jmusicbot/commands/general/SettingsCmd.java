@@ -15,8 +15,8 @@
  */
 package com.jagrosh.jmusicbot.commands.general;
 
-import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.CommandEvent;
+import pw.chew.jdautilities.command.Command;
+import pw.chew.jdautilities.command.CommandEvent;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.settings.QueueType;
 import com.jagrosh.jmusicbot.settings.RepeatMode;

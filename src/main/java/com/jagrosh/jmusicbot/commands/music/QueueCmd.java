@@ -17,8 +17,8 @@ package com.jagrosh.jmusicbot.commands.music;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.jdautilities.menu.Paginator;
+import pw.chew.jdautilities.command.CommandEvent;
+import pw.chew.jdautilities.menu.Paginator;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.QueuedTrack;

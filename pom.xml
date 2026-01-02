@@ -35,6 +35,11 @@
             <name>Lavalink Repository</name>
             <url>https://maven.lavalink.dev/releases</url>
         </repository>
+        <repository>
+            <id>m2-chew</id>
+            <name>m2-chew</name>
+            <url>https://m2.chew.pro/releases</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -45,24 +50,24 @@
             <version>4.4.1_353</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jagrosh.JDA-Utilities</groupId>
-            <artifactId>command</artifactId>
-            <version>3.0.5</version>
+            <groupId>pw.chew</groupId>
+            <artifactId>jda-chewtils-command</artifactId>
+            <version>1.24.1</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jagrosh.JDA-Utilities</groupId>
-            <artifactId>commons</artifactId>
-            <version>3.0.5</version>
+            <groupId>pw.chew</groupId>
+            <artifactId>jda-chewtils-commons</artifactId>
+            <version>1.24.1</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jagrosh.JDA-Utilities</groupId>
-            <artifactId>examples</artifactId>
-            <version>3.0.5</version>
+            <groupId>pw.chew</groupId>
+            <artifactId>jda-chewtils-examples</artifactId>
+            <version>1.24.1</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jagrosh.JDA-Utilities</groupId>
-            <artifactId>menu</artifactId>
-            <version>3.0.5</version>
+            <groupId>pw.chew</groupId>
+            <artifactId>jda-chewtils-menu</artifactId>
+            <version>1.24.1</version>
         </dependency>
 
         <!-- Music Dependencies -->

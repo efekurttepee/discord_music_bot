@@ -15,7 +15,7 @@
  */
 package com.jagrosh.jmusicbot.settings;
 
-import com.jagrosh.jdautilities.command.GuildSettingsProvider;
+import pw.chew.jdautilities.command.GuildSettingsProvider;
 import java.util.Collection;
 import java.util.Collections;
 import net.dv8tion.jda.api.entities.Guild;

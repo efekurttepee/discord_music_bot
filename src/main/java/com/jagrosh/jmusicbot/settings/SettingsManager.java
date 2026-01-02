@@ -15,7 +15,7 @@
  */
 package com.jagrosh.jmusicbot.settings;
 
-import com.jagrosh.jdautilities.command.GuildSettingsManager;
+import pw.chew.jdautilities.command.GuildSettingsManager;
 import com.jagrosh.jmusicbot.utils.OtherUtil;
 import java.io.IOException;
 import java.nio.file.Files;

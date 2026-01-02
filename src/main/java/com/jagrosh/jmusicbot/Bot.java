@@ -17,7 +17,7 @@ package com.jagrosh.jmusicbot;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
+import pw.chew.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.jmusicbot.audio.AloneInVoiceHandler;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.NowplayingHandler;
