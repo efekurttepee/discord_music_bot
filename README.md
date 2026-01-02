@@ -1,140 +1,60 @@
-# Flux - Modern Discord Music Bot 🎵
+<img align="right" src="https://i.imgur.com/zrE80HY.png" height="200" width="200">
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-brightgreen.svg)](https://nodejs.org)
-[![Discord.js](https://img.shields.io/badge/Discord.js-v14+-blue.svg)](https://discord.js.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![discord-player](https://img.shields.io/badge/discord--player-v6/v7-orange.svg)](https://npm.im/discord-player)
+# JMusicBot
 
----
+[![Downloads](https://img.shields.io/github/downloads/jagrosh/MusicBot/total.svg)](https://github.com/jagrosh/MusicBot/releases/latest)
+[![Stars](https://img.shields.io/github/stars/jagrosh/MusicBot.svg)](https://github.com/jagrosh/MusicBot/stargazers)
+[![Release](https://img.shields.io/github/release/jagrosh/MusicBot.svg)](https://github.com/jagrosh/MusicBot/releases/latest)
+[![License](https://img.shields.io/github/license/jagrosh/MusicBot.svg)](https://github.com/jagrosh/MusicBot/blob/master/LICENSE)
+[![Discord](https://discordapp.com/api/guilds/147698382092238848/widget.png)](https://discord.gg/0p9LSGoRLu6Pet0k)<br>
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jagrosh/MusicBot/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/jagrosh/MusicBot/tree/master)
+[![Build and Test](https://github.com/jagrosh/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/jagrosh/MusicBot/actions/workflows/build-and-test.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/jagrosh/musicbot/badge)](https://www.codefactor.io/repository/github/jagrosh/musicbot)
 
-## 🌍 English
+A cross-platform Discord music bot with a clean interface, and that is easy to set up and run yourself!
 
-### 🎯 About Flux
+[![Setup](http://i.imgur.com/VvXYp5j.png)](https://jmusicbot.com/setup)
 
-**Flux** is a modern, high-performance Discord music bot built with **discord.js v14+** and **discord-player**. It supports multiple platforms including YouTube, Spotify, and Apple Music with an elegant user interface featuring interactive buttons.
+## Features
+  * Easy to run (just make sure Java is installed, and run!)
+  * Fast loading of songs
+  * No external keys needed (besides a Discord Bot token)
+  * Smooth playback
+  * Server-specific setup for the "DJ" role that can moderate the music
+  * Clean and beautiful menus
+  * Supports many sites, including Youtube, Soundcloud, and more
+  * Supports many online radio/streams
+  * Supports local files
+  * Playlist support (both web/youtube, and local)
 
-### ✨ Features
+## Supported sources and formats
+JMusicBot supports all sources and formats supported by [lavaplayer](https://github.com/sedmelluq/lavaplayer#supported-formats):
+### Sources
+  * YouTube
+  * SoundCloud
+  * Bandcamp
+  * Vimeo
+  * Twitch streams
+  * Local files
+  * HTTP URLs
+### Formats
+  * MP3
+  * FLAC
+  * WAV
+  * Matroska/WebM (AAC, Opus or Vorbis codecs)
+  * MP4/M4A (AAC codec)
+  * OGG streams (Opus, Vorbis and FLAC codecs)
+  * AAC streams
+  * Stream playlists (M3U and PLS)
 
-- **🎵 High-Quality Music Streaming**
-  - YouTube (Direct playback & search)
-  - SoundCloud support
-  - High bitrate audio (up to 320kbps)
+## Example
+![Loading Example...](https://i.imgur.com/kVtTKvS.gif)
 
-- **🍏 Apple Music Bridge Support**
-  - **NO API keys required!** Uses web scraping/bridging
-  - Automatic conversion: Apple Music URLs → YouTube search → Playback
-  - Seamless experience just like native support
+## Setup
+Please see the [Setup Page](https://jmusicbot.com/setup) to run this bot yourself!
 
-- **🟢 Spotify Integration**
-  - Full Spotify track & playlist support
-  - Free OAuth2 authentication
-  - Stable streaming with proper metadata
+## Questions/Suggestions/Bug Reports
+**Please read the [Issues List](https://github.com/jagrosh/MusicBot/issues) before suggesting a feature**. If you have a question, need troubleshooting help, or want to brainstorm a new feature, please start a [Discussion](https://github.com/jagrosh/MusicBot/discussions). If you'd like to suggest a feature or report a reproducible bug, please open an [Issue](https://github.com/jagrosh/MusicBot/issues) on this repository. If you like this bot, be sure to add a star to the libraries that make this possible: [**JDA**](https://github.com/DV8FromTheWorld/JDA) and [**lavaplayer**](https://github.com/sedmelluq/lavaplayer)!
 
-- **🎛️ Interactive UI with Buttons**
-  - ⏯️ **Pause/Resume** - Toggle playback state
-  - ⏭️ **Skip** - Skip to next track
-  - 🔀 **Shuffle** - Randomize queue order
-  - 🔁 **Loop** - Track/Queue loop modes
-  - 🛑 **Stop** - Clear queue and disconnect
-
-- **⚡ Modern & Lag-Free**
-  - Built on discord-player v6/v7
-  - Automatic voice channel management
-  - Smart queue system with history
-  - Beautiful embed messages with progress bars
-
-### 📸 Screenshots
-
-![Flux Bot Interface](https://via.placeholder.com/800x400?text=Flux+Music+Bot+Interface)
-*Bot interface showing embed with track info and interactive buttons*
-
-![Flux Queue System](https://via.placeholder.com/800x400?text=Flux+Queue+System)
-*Queue management with track listings and controls*
-
-### 🎧 Supported Commands
-
-| Command | Description |
-|---------|-------------|
-| `/play [query]` | Play a song or playlist from YouTube, Spotify, or Apple Music |
-| `/stop` | Stop playback and clear the queue |
-| `/skip` | Skip the current track |
-| `/queue` | Show the current music queue |
-| `/nowplaying` | Display information about the currently playing track |
-
-### 📜 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🇹🇷 Türkçe
-
-### 🎯 Flux Hakkında
-
-**Flux**, **discord.js v14+** ve **discord-player** ile oluşturulmuş modern, yüksek performanslı bir Discord müzik botudur. YouTube, Spotify ve Apple Music dahil olmak üzere birçok platformu destekler ve etkileşimli düğmelerle şık bir kullanıcı arayüzü sunar.
-
-### ✨ Özellikler
-
-- **🎵 Yüksek Kaliteli Müzik Akışı**
-  - YouTube (Doğrudan çalma & arama)
-  - SoundCloud desteği
-  - Yüksek bit hızı ses (320kbps'e kadar)
-
-- **🍏 Apple Music Köprü Desteği**
-  - **API anahtarları gerektirmez!** Web kazıma/köprüleme kullanır
-  - Otomatik dönüştürme: Apple Music URL'leri → YouTube araması → Çalma
-  - Yerel destek gibi sorunsuz deneyim
-
-- **🟢 Spotify Entegrasyonu**
-  - Tam Spotify parça & çalma listesi desteği
-  - Ücretsiz OAuth2 kimlik doğrulama
-  - Uygun meta verilerle kararlı akış
-
-- **🎛️ Etkileşimli Arayüz ve Düğmeler**
-  - ⏯️ **Duraklat/Sürdür** - Çalma durumunu değiştir
-  - ⏭️ **Atla** - Sonraki parçaya geç
-  - 🔀 **Karıştır** - Kuyruk sırasını rastgeleleştir
-  - 🔁 **Döngü** - Parça/Kuyruk döngü modları
-  - 🛑 **Durdur** - Kuyruğu temizle ve bağlantıyı kes
-
-- **⚡ Modern ve Gecikmesiz**
-  - discord-player v6/v7 üzerinde inşa edildi
-  - Otomatik ses kanal yönetimi
-  - Geçmişle akıllı kuyruk sistemi
-  - İlerleme çubuklarıyla güzel gömülü mesajlar
-
-### 📸 Ekran Görüntüleri
-
-![Flux Bot Arayüzü](https://via.placeholder.com/800x400?text=Flux+Müzik+Bot+Arayüzü)
-*Parça bilgileri ve etkileşimli düğmelerle bot arayüzü*
-
-![Flux Kuyruk Sistemi](https://via.placeholder.com/800x400?text=Flux+Kuyruk+Sistemi)
-*Parça listeleri ve kontrollerle kuyruk yönetimi*
-
-### 🎧 Desteklenen Komutlar
-
-| Komut | Açıklama |
-|-------|-----------|
-| `/play [sorgu]` | YouTube, Spotify veya Apple Music'ten bir şarkı veya çalma listesi çal |
-| `/stop` | Çalmayı durdur ve kuyruğu temizle |
-| `/skip` | Mevcut parçayı atla |
-| `/queue` | Mevcut müzik kuyruğunu göster |
-| `/nowplaying` | Şu anda çalınan parçayla ilgili bilgi göster |
-
-### 📜 Lisans
-
-Bu proje **MIT Lisansı** altında lisanslanmıştır - detaylar için [LICENSE](LICENSE) dosyasına bakın.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## 📬 Contact
-
-For questions or support, please open a GitHub issue.
-
----
-
-**✨ Made with love for music lovers by [Your Name] ✨**
+## Editing
+This bot (and the source code here) might not be easy to edit for inexperienced programmers. The main purpose of having the source public is to show the capabilities of the libraries, to allow others to understand how the bot works, and to allow those knowledgeable about java, JDA, and Discord bot development to contribute. There are many requirements and dependencies required to edit and compile it, and there will not be support provided for people looking to make changes on their own. Instead, consider making a feature request (see the above section). If you choose to make edits, please do so in accordance with the Apache 2.0 License.
