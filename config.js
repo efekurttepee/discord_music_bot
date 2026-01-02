@@ -5,6 +5,8 @@ module.exports = {
 	token: process.env.TOKEN || "", //- Bot's Token
 	clientId: process.env.CLIENT_ID || "", //- ID of the bot
 	clientSecret: process.env.CLIENT_SECRET || "", //- Client Secret of the bot
+	spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "", //- Spotify Client ID
+	spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "", //- Spotify Client Secret
 	port: process.env.PORT || 4200, //- Port of the API and Dashboard
 	scopes: ["identify", "guilds", "applications.commands"], //- Discord OAuth2 Scopes
 	inviteScopes: ["bot", "applications.commands"], // Invite link scopes
