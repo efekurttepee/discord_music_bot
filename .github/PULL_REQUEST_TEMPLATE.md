@@ -1,14 +1,18 @@
-### This pull request...
-  - [ ] Fixes a bug
-  - [ ] Introduces a new feature
-  - [ ] Improves an existing feature
-  - [ ] Boosts code quality or performance
+## Please describe the changes this PR makes and why it should be merged:
 
-### Description
-Replace this with a description of the pull request
+## Status and versioning classification:
 
-### Purpose
-Replace this with a description of the problem or use-case
+<!--
+Please move lines that apply to you out of the comment:
+- Code changes have been tested against the Discord API, or there are no code changes
+- I know how to update typings and have done so, or typings don't need updating
+- This PR changes the library's interface (methods or parameters added)
+- This PR includes breaking changes (methods removed or renamed, parameters moved or removed)
+- This PR **only** includes non-code changes, like changes to documentation, README, etc.
+-->
 
-### Relevant Issue(s)
-This PR closes issue #...
+# Important.
+
+- Write in camelCase, not snake_case.
+- Do not push to master/main without testing your changes first, make a branch
+  if you have to.
