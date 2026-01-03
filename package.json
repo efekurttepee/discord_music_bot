@@ -49,7 +49,7 @@
     "dotenv": "^16.0.1",
     "ejs": "^3.1.6",
     "kazagumo": "^3.2.0",
-    "kazagumo-spotify": "^3.0.0",
+    "kazagumo-spotify": "^2.1.1",
     "shoukaku": "^4.1.0",
     "express": "^4.17.1",
     "express-rate-limit": "^6.2.0",
