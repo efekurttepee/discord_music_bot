@@ -23,7 +23,7 @@ const command = new SlashCommand()
     let node = await client.getLavalink(client);
     if (!node) {
       return interaction.reply({
-        embeds: [client.ErrorEmbed("Lavalink sunucusu bağlı değil")],
+        embeds: [client.ErrorEmbed("Lavalink node is not connected")],
       });
     }
 
@@ -49,63 +49,18 @@ const command = new SlashCommand()
       embeds: [
         new MessageEmbed()
           .setColor(client.config.embedColor)
-          .setDescription(":mag_right: **Aranıyor...**"),
+          .setDescription(":mag_right: **Searching...**"),
       ],
       fetchReply: true,
     });
 
-    const SpotifyResolver = require("../../lib/SpotifyResolver");
-    const spotifyResolver = new SpotifyResolver(client);
-
     let query = options.getString("query", true);
-
-    if (query.includes("spotify.com")) {
-      await interaction.editReply({
-        embeds: [
-          new MessageEmbed()
-            .setColor(client.config.embedColor)
-            .setDescription(":mag_right: **Spotify Linki Çözümleniyor...**"),
-        ],
-      });
-      const result = await spotifyResolver.resolve(query);
-      if (result.type === 'TRACK') {
-        query = result.tracks[0];
-      } else if (result.type === 'PLAYLIST') {
-        // For now, just play the first track of the playlist as a simple fix
-        query = result.tracks[0];
-        // Ideally we would add all to queue, but let's get single track working first
-      }
-    }
-
     let res = await player.search(query, interaction.user).catch((err) => {
       client.error(err);
       return {
         loadType: "LOAD_FAILED",
       };
     });
-
-    // Fallback System: If YouTube fails (LOAD_FAILED or NO_MATCHES), try SoundCloud
-    if (res.loadType === "LOAD_FAILED" || res.loadType === "NO_MATCHES") {
-      console.log(`[DEBUG] YouTube validation failed for '${query}'. Retrying with SoundCloud...`);
-
-      let scQuery = query.startsWith("scsearch:") ? query : `scsearch:${query}`;
-      // If it was already a specific search, don't double prefix, but if it was raw text, add scsearch:
-
-      let scRes = await player.search(scQuery, interaction.user).catch((err) => {
-        return { loadType: "LOAD_FAILED" };
-      });
-
-      if (scRes.loadType !== "LOAD_FAILED" && scRes.loadType !== "NO_MATCHES") {
-        res = scRes; // Use SoundCloud result if successful
-      }
-    }
-
-    console.log(`[DEBUG] Query: ${query}`);
-    console.log(`[DEBUG] Search Result LoadType: ${res.loadType}`);
-    if (res.loadType === 'NO_MATCHES' || res.loadType === 'LOAD_FAILED') {
-      console.log(`[DEBUG] Tracks found: ${res.tracks?.length || 0}`);
-      if (res.exception) console.log(`[DEBUG] Exception: ${JSON.stringify(res.exception)}`);
-    }
 
     if (res.loadType === "LOAD_FAILED") {
       if (!player.queue.current) {
@@ -116,7 +71,7 @@ const command = new SlashCommand()
           embeds: [
             new MessageEmbed()
               .setColor("RED")
-              .setDescription("Arama sırasında bir hata oluştu"),
+              .setDescription("There was an error while searching"),
           ],
         })
         .catch(this.warn);
@@ -131,7 +86,7 @@ const command = new SlashCommand()
           embeds: [
             new MessageEmbed()
               .setColor("RED")
-              .setDescription("Sonuç bulunamadı"),
+              .setDescription("No results were found"),
           ],
         })
         .catch(this.warn);
@@ -148,23 +103,23 @@ const command = new SlashCommand()
       var title = title.replace(/\[/g, "");
       let addQueueEmbed = new MessageEmbed()
         .setColor(client.config.embedColor)
-        .setAuthor({ name: "Kuyruğa eklendi", iconURL: client.config.iconURL })
-        .setDescription(`[${title}](${res.tracks[0].uri})` || "Başlık Yok")
+        .setAuthor({ name: "Added to queue", iconURL: client.config.iconURL })
+        .setDescription(`[${title}](${res.tracks[0].uri})` || "No Title")
         .setURL(res.tracks[0].uri)
         .addFields(
           {
-            name: "Ekleyen",
+            name: "Added by",
             value: `<@${interaction.user.id}>`,
             inline: true,
           },
           {
-            name: "Süre",
+            name: "Duration",
             value: res.tracks[0].isStream
-              ? `\`CANLI 🔴 \``
+              ? `\`LIVE 🔴 \``
               : `\`${client.ms(res.tracks[0].duration, {
-                colonNotation: true,
-                secondsDecimalDigits: 0,
-              })}\``,
+                  colonNotation: true,
+                  secondsDecimalDigits: 0,
+                })}\``,
             inline: true,
           }
         );
@@ -179,7 +134,7 @@ const command = new SlashCommand()
 
       if (player.queue.totalSize > 1) {
         addQueueEmbed.addFields({
-          name: "Kuyruk sırası",
+          name: "Position in queue",
           value: `${player.queue.size}`,
           inline: true,
         });
@@ -204,19 +159,19 @@ const command = new SlashCommand()
       let playlistEmbed = new MessageEmbed()
         .setColor(client.config.embedColor)
         .setAuthor({
-          name: "Çalma listesi kuyruğa eklendi",
+          name: "Playlist added to queue",
           iconURL: client.config.iconURL,
         })
         .setThumbnail(res.tracks[0].thumbnail)
         .setDescription(`[${res.playlist.name}](${query})`)
         .addFields(
           {
-            name: "Eklendi",
-            value: `\`${res.tracks.length}\` şarkı`,
+            name: "Enqueued",
+            value: `\`${res.tracks.length}\` songs`,
             inline: true,
           },
           {
-            name: "Çalma listesi süresi",
+            name: "Playlist duration",
             value: `\`${client.ms(res.playlist.duration, {
               colonNotation: true,
               secondsDecimalDigits: 0,

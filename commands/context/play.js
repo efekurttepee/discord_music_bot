@@ -50,45 +50,15 @@ module.exports = {
       fetchReply: true,
     });
 
-    const SpotifyResolver = require("../../lib/SpotifyResolver");
-    const spotifyResolver = new SpotifyResolver(client);
-
-    let query =
+    const query =
       interaction.channel.messages.cache.get(interaction.targetId).content ??
       (await interaction.channel.messages.fetch(interaction.targetId));
-
-    if (query.includes("spotify.com")) {
-      await interaction.editReply({
-        embeds: [
-          new MessageEmbed()
-            .setColor(client.config.embedColor)
-            .setDescription(":mag_right: **Spotify Linki Çözümleniyor...**"),
-        ],
-      });
-      const result = await spotifyResolver.resolve(query);
-      if (result.type === 'TRACK') {
-        query = result.tracks[0];
-      } else if (result.type === 'PLAYLIST') {
-        query = result.tracks[0];
-      }
-    }
-
     let res = await player.search(query, interaction.user).catch((err) => {
       client.error(err);
       return {
         loadType: "LOAD_FAILED",
       };
     });
-
-    // Fallback System: If YouTube fails (LOAD_FAILED or NO_MATCHES), try SoundCloud
-    if (res.loadType === "LOAD_FAILED" || res.loadType === "NO_MATCHES") {
-      let scQuery = `scsearch:${query}`;
-      let scRes = await player.search(scQuery, interaction.user).catch(() => ({ loadType: "LOAD_FAILED" }));
-
-      if (scRes.loadType !== "LOAD_FAILED" && scRes.loadType !== "NO_MATCHES") {
-        res = scRes;
-      }
-    }
 
     if (res.loadType === "LOAD_FAILED") {
       if (!player.queue.current) {
@@ -145,9 +115,9 @@ module.exports = {
             value: res.tracks[0].isStream
               ? `\`LIVE 🔴 \``
               : `\`${client.ms(res.tracks[0].duration, {
-                colonNotation: true,
-                secondsDecimalDigits: 0,
-              })}\``,
+                  colonNotation: true,
+                  secondsDecimalDigits: 0,
+                })}\``,
             inline: true,
           }
         );
