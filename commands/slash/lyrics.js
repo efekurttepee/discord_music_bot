@@ -72,27 +72,29 @@ const command = new SlashCommand()
 		}
 
 		try {
-			// Check if Genius API token is configured
-			if (!client.config.geniusApiToken) {
+			// Get Genius API token from environment variable or config
+			const geniusToken = process.env.GENIUS_API_TOKEN || client.config.geniusApiToken;
+
+			if (!geniusToken) {
 				return interaction.editReply({
 					embeds: [
 						new MessageEmbed()
 							.setColor("RED")
 							.setTitle("Genius API Not Configured")
 							.setDescription(
-								"The Genius API token is not configured. Please add `geniusApiToken` to your config.\n\n" +
-								"**How to get a token:**\n" +
-								"1. Go to https://genius.com/api-clients\n" +
-								"2. Create a new API client\n" +
-								"3. Copy the 'Client Access Token'\n" +
-								"4. Add it to your config as `geniusApiToken`"
+								"The Genius API token is not configured.\n\n" +
+								"**Railway Setup:**\n" +
+								"1. Go to Railway project → Variables\n" +
+								"2. Add: `GENIUS_API_TOKEN` = your token\n" +
+								"3. Redeploy\n\n" +
+								"**Get a token:** https://genius.com/api-clients"
 							),
 					],
 				});
 			}
 
 			const options = {
-				apiKey: client.config.geniusApiToken,
+				apiKey: geniusToken,
 				title: searchQuery,
 				artist: "",
 				optimizeQuery: true
