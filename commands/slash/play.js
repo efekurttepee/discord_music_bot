@@ -54,7 +54,29 @@ const command = new SlashCommand()
       fetchReply: true,
     });
 
+    const SpotifyResolver = require("../../lib/SpotifyResolver");
+    const spotifyResolver = new SpotifyResolver(client);
+
     let query = options.getString("query", true);
+
+    if (query.includes("spotify.com")) {
+      await interaction.editReply({
+        embeds: [
+          new MessageEmbed()
+            .setColor(client.config.embedColor)
+            .setDescription(":mag_right: **Spotify Linki Çözümleniyor...**"),
+        ],
+      });
+      const result = await spotifyResolver.resolve(query);
+      if (result.type === 'TRACK') {
+        query = result.tracks[0];
+      } else if (result.type === 'PLAYLIST') {
+        // For now, just play the first track of the playlist as a simple fix
+        query = result.tracks[0];
+        // Ideally we would add all to queue, but let's get single track working first
+      }
+    }
+
     let res = await player.search(query, interaction.user).catch((err) => {
       client.error(err);
       return {
