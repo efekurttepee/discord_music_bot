@@ -45,7 +45,27 @@ async function scrapeGeniusLyrics(query) {
 		});
 
 		// Clean up the lyrics
-		lyrics = lyrics.trim();
+		lyrics = lyrics
+			.trim()
+			// Remove contributor info at the start
+			.replace(/^\d+\s*Contributors.*?$/gm, '')
+			.replace(/^Translations.*?$/gm, '')
+			.replace(/^Deutsch.*?$/gm, '')
+			.replace(/^Türkçe.*?$/gm, '')
+			.replace(/^Español.*?$/gm, '')
+			.replace(/^Português.*?$/gm, '')
+			.replace(/^Français.*?$/gm, '')
+			.replace(/^Polski.*?$/gm, '')
+			.replace(/^Русский.*?$/gm, '')
+			.replace(/^Česky.*?$/gm, '')
+			.replace(/^ไทย.*?$/gm, '')
+			.replace(/^فارسی.*?$/gm, '')
+			// Remove "Read More" and similar
+			.replace(/Read More.*$/gm, '')
+			.replace(/See .*? Live.*$/gm, '')
+			// Remove extra blank lines
+			.replace(/\n{3,}/g, '\n\n')
+			.trim();
 
 		if (lyrics.length > 0) {
 			return lyrics;
