@@ -53,7 +53,7 @@ const command = new SlashCommand()
 		let currentTitle = ``;
 		const phrasesToRemove = [
 			"Full Video", "Full Audio", "Official Music Video", "Lyrics", "Lyrical Video",
-			"Feat.", "Ft.", "Official", "Audio", "Video", "HD", "4K", "Remix", "Lyric Video", "Lyrics Video", "8K", 
+			"Feat.", "Ft.", "Official", "Audio", "Video", "HD", "4K", "Remix", "Lyric Video", "Lyrics Video", "8K",
 			"High Quality", "Animation Video", "\\(Official Video\\. .*\\)", "\\(Music Video\\. .*\\)", "\\[NCS Release\\]",
 			"Extended", "DJ Edit", "with Lyrics", "Lyrics", "Karaoke",
 			"Instrumental", "Live", "Acoustic", "Cover", "\\(feat\\. .*\\)"
@@ -65,6 +65,22 @@ const command = new SlashCommand()
 				.replace(/\s*([\[\(].*?[\]\)])?\s*(\|.*)?\s*(\*.*)?$/, '');
 		}
 		let query = args ? args : currentTitle;
+		// Sanitize query to prevent URL encoding errors
+		query = query
+			.replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+			.trim()
+			.substring(0, 100); // Limit length
+
+		if (!query || query.length < 2) {
+			return interaction.editReply({
+				embeds: [
+					new MessageEmbed()
+						.setColor("RED")
+						.setDescription("Please provide a valid song name"),
+				],
+			});
+		}
+
 		let lyricsResults = [];
 
 		lyricsApi.search(query).then(async (lyricsData) => {
