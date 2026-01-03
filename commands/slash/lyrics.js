@@ -73,14 +73,36 @@ async function scrapeGeniusLyrics(query) {
 			.trim();
 
 		if (lyrics.length > 0) {
-			// Also get song metadata for better display
-			const songTitle = $('h1').first().text().trim() || null;
-			const artistName = $('a[class*="HeaderArtistAndTracklistdesktop__Artist"]').first().text().trim() || null;
+			// Extract song metadata with better selectors
+			let songTitle = null;
+			let artistName = null;
+
+			// Try multiple selectors for song title
+			songTitle = $('h1[class*="SongHeaderdesktop__Title"]').first().text().trim();
+			if (!songTitle) {
+				songTitle = $('h1').first().text().trim();
+			}
+
+			// Try multiple selectors for artist
+			artistName = $('a[class*="HeaderArtistAndTracklistdesktop__Artist"]').first().text().trim();
+			if (!artistName) {
+				artistName = $('a[href*="/artists/"]').first().text().trim();
+			}
+
+			// Get featured artists if any
+			const featuredArtists = [];
+			$('a[class*="HeaderArtistAndTracklistdesktop__Artist"]').each((i, elem) => {
+				if (i > 0) { // Skip first one (main artist)
+					const feat = $(elem).text().trim();
+					if (feat) featuredArtists.push(feat);
+				}
+			});
 
 			return {
 				lyrics: lyrics,
-				title: songTitle,
-				artist: artistName
+				title: songTitle || null,
+				artist: artistName || null,
+				featured: featuredArtists.length > 0 ? featuredArtists : null
 			};
 		}
 
@@ -200,6 +222,10 @@ const command = new SlashCommand()
 			let displayTitle = '🎵 ';
 			if (result.artist && result.title) {
 				displayTitle += `${result.artist} - ${result.title}`;
+				// Add featured artists if any
+				if (result.featured && result.featured.length > 0) {
+					displayTitle += ` (feat. ${result.featured.join(', ')})`;
+				}
 			} else if (result.title) {
 				displayTitle += result.title;
 			} else {
