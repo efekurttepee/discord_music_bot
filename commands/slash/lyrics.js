@@ -3,22 +3,57 @@ const { MessageEmbed } = require("discord.js");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-// Simple lyrics scraper - no API needed!
-async function scrapeLyrics(query) {
+// Custom Genius scraper - no API key needed!
+async function scrapeGeniusLyrics(query) {
 	try {
-		// Use AZLyrics-style search (works without API)
-		const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query + " lyrics")}`;
+		// Step 1: Search Genius for the song
+		const searchUrl = `https://genius.com/api/search/multi?q=${encodeURIComponent(query)}`;
+		const searchResponse = await axios.get(searchUrl, {
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+			}
+		});
 
-		// Try lyrics-finder first (it's already installed)
-		const lyricsFinder = require("lyrics-finder");
-		const lyrics = await lyricsFinder(query, "");
+		// Find the first song result
+		const sections = searchResponse.data.response.sections;
+		let songUrl = null;
 
-		if (lyrics && lyrics.trim().length > 0) {
+		for (const section of sections) {
+			if (section.type === 'song' && section.hits && section.hits.length > 0) {
+				songUrl = section.hits[0].result.url;
+				break;
+			}
+		}
+
+		if (!songUrl) {
+			return null;
+		}
+
+		// Step 2: Scrape the lyrics from the song page
+		const pageResponse = await axios.get(songUrl, {
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+			}
+		});
+
+		const $ = cheerio.load(pageResponse.data);
+
+		// Genius stores lyrics in div[data-lyrics-container="true"]
+		let lyrics = '';
+		$('div[data-lyrics-container="true"]').each((i, elem) => {
+			lyrics += $(elem).text() + '\n\n';
+		});
+
+		// Clean up the lyrics
+		lyrics = lyrics.trim();
+
+		if (lyrics.length > 0) {
 			return lyrics;
 		}
 
 		return null;
 	} catch (error) {
+		console.error('Genius scraper error:', error.message);
 		return null;
 	}
 }
@@ -93,10 +128,12 @@ const command = new SlashCommand()
 		}
 
 		try {
-			const lyrics = await scrapeLyrics(searchQuery);
+			// Try our custom Genius scraper
+			const lyrics = await scrapeGeniusLyrics(searchQuery);
 
 			if (!lyrics || lyrics.trim().length === 0) {
-				// Create Google search link as fallback
+				// Create search links as fallback
+				const geniusSearchUrl = `https://genius.com/search?q=${encodeURIComponent(searchQuery)}`;
 				const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery + " lyrics")}`;
 
 				return interaction.editReply({
@@ -106,7 +143,9 @@ const command = new SlashCommand()
 							.setTitle("🔍 Lyrics Not Found")
 							.setDescription(
 								`Could not find lyrics for: **${searchQuery}**\n\n` +
-								`[🔎 Search on Google](${googleSearchUrl})\n\n` +
+								`**Search manually:**\n` +
+								`🎵 [Search on Genius](${geniusSearchUrl})\n` +
+								`🔎 [Search on Google](${googleSearchUrl})\n\n` +
 								`**Tips:**\n` +
 								`• Try: \`Artist - Song Name\`\n` +
 								`• Use English names\n` +
@@ -129,7 +168,8 @@ const command = new SlashCommand()
 				.setTitle(`🎵 ${searchQuery}`)
 				.setDescription(lyricsText)
 				.setFooter({
-					text: 'Lyrics from web sources',
+					text: 'Lyrics from Genius.com',
+					iconURL: 'https://images.genius.com/8ed669cadd956443e29c70361ec4f372.1000x1000x1.png'
 				});
 
 			return interaction.editReply({
@@ -139,7 +179,8 @@ const command = new SlashCommand()
 		} catch (error) {
 			client.error("Lyrics error:", error);
 
-			// Always provide Google search as fallback
+			// Always provide search links as fallback
+			const geniusSearchUrl = `https://genius.com/search?q=${encodeURIComponent(searchQuery)}`;
 			const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery + " lyrics")}`;
 
 			return interaction.editReply({
@@ -148,9 +189,10 @@ const command = new SlashCommand()
 						.setColor(client.config.embedColor)
 						.setTitle("🔍 Search for Lyrics")
 						.setDescription(
-							`Could not automatically fetch lyrics for: **${searchQuery}**\n\n` +
-							`[🔎 Search on Google](${googleSearchUrl})\n\n` +
-							`Click the link above to find lyrics manually.`
+							`Error fetching lyrics for: **${searchQuery}**\n\n` +
+							`**Search manually:**\n` +
+							`🎵 [Search on Genius](${geniusSearchUrl})\n` +
+							`🔎 [Search on Google](${googleSearchUrl})`
 						),
 				],
 			});
