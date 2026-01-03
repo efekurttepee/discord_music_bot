@@ -67,9 +67,9 @@ module.exports = {
       });
       const result = await spotifyResolver.resolve(query);
       if (result.type === 'TRACK') {
-        query = result.tracks[0];
+        query = `scsearch:${result.tracks[0]}`;
       } else if (result.type === 'PLAYLIST') {
-        query = result.tracks[0];
+        query = `scsearch:${result.tracks[0]}`;
       }
     }
 
