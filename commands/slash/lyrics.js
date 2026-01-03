@@ -73,7 +73,15 @@ async function scrapeGeniusLyrics(query) {
 			.trim();
 
 		if (lyrics.length > 0) {
-			return lyrics;
+			// Also get song metadata for better display
+			const songTitle = $('h1').first().text().trim() || null;
+			const artistName = $('a[class*="HeaderArtistAndTracklistdesktop__Artist"]').first().text().trim() || null;
+
+			return {
+				lyrics: lyrics,
+				title: songTitle,
+				artist: artistName
+			};
 		}
 
 		return null;
@@ -154,9 +162,9 @@ const command = new SlashCommand()
 
 		try {
 			// Try our custom Genius scraper
-			const lyrics = await scrapeGeniusLyrics(searchQuery);
+			const result = await scrapeGeniusLyrics(searchQuery);
 
-			if (!lyrics || lyrics.trim().length === 0) {
+			if (!result || !result.lyrics || result.lyrics.trim().length === 0) {
 				// Create search links as fallback
 				const geniusSearchUrl = `https://genius.com/search?q=${encodeURIComponent(searchQuery)}`;
 				const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery + " lyrics")}`;
@@ -182,15 +190,25 @@ const command = new SlashCommand()
 
 			// Split lyrics if too long
 			const maxLength = 4096;
-			let lyricsText = lyrics;
+			let lyricsText = result.lyrics;
 
 			if (lyricsText.length > maxLength) {
 				lyricsText = lyricsText.substring(0, maxLength - 100) + "\n\n... *(lyrics truncated)*";
 			}
 
+			// Create a nice title with artist and song name
+			let displayTitle = '🎵 ';
+			if (result.artist && result.title) {
+				displayTitle += `${result.artist} - ${result.title}`;
+			} else if (result.title) {
+				displayTitle += result.title;
+			} else {
+				displayTitle += searchQuery;
+			}
+
 			const lyricsEmbed = new MessageEmbed()
 				.setColor(client.config.embedColor)
-				.setTitle(`🎵 ${searchQuery}`)
+				.setTitle(displayTitle)
 				.setDescription(lyricsText)
 				.setFooter({
 					text: 'Lyrics from Genius.com',
