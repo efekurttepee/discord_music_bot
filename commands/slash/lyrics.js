@@ -1,6 +1,6 @@
 const SlashCommand = require("../../lib/SlashCommand");
 const { MessageEmbed } = require("discord.js");
-const { getLyrics, getSong } = require("genius-lyrics-api");
+const lyricsFinder = require("lyrics-finder");
 
 const command = new SlashCommand()
 	.setName("lyrics")
@@ -8,7 +8,7 @@ const command = new SlashCommand()
 	.addStringOption((option) =>
 		option
 			.setName("song")
-			.setDescription("The song to get lyrics for (format: Artist - Song)")
+			.setDescription("The song to search for (Artist - Song or just Song Name)")
 			.setRequired(false),
 	)
 	.setRun(async (client, interaction, options) => {
@@ -23,14 +23,6 @@ const command = new SlashCommand()
 		let player;
 		if (client.manager) {
 			player = client.manager.players.get(interaction.guild.id);
-		} else {
-			return interaction.editReply({
-				embeds: [
-					new MessageEmbed()
-						.setColor("RED")
-						.setDescription("Lavalink node is not connected"),
-				],
-			});
 		}
 
 		const args = options.getString("song");
@@ -39,7 +31,7 @@ const command = new SlashCommand()
 				embeds: [
 					new MessageEmbed()
 						.setColor("RED")
-						.setDescription("There's nothing playing and no song was specified"),
+						.setDescription("There's nothing playing and no song was specified.\n\nUsage: `/lyrics song: Artist - Song Name`"),
 				],
 			});
 		}
@@ -57,77 +49,39 @@ const command = new SlashCommand()
 				.replace(/lyric video/gi, '')
 				.replace(/\(.*?remix.*?\)/gi, '')
 				.replace(/\[.*?remix.*?\]/gi, '')
+				.replace(/\(.*?ft\..*?\)/gi, '')
+				.replace(/\[.*?ft\..*?\]/gi, '')
 				.trim();
 			searchQuery = title;
 		}
 
-		if (!searchQuery) {
+		if (!searchQuery || searchQuery.length < 2) {
 			return interaction.editReply({
 				embeds: [
 					new MessageEmbed()
 						.setColor("RED")
-						.setDescription("Please provide a song name"),
+						.setDescription("Please provide a valid song name"),
 				],
 			});
 		}
 
 		try {
-			// Get Genius API token from environment variable or config
-			const geniusToken = process.env.GENIUS_API_TOKEN || client.config.geniusApiToken;
-
-			if (!geniusToken) {
-				return interaction.editReply({
-					embeds: [
-						new MessageEmbed()
-							.setColor("RED")
-							.setTitle("Genius API Not Configured")
-							.setDescription(
-								"The Genius API token is not configured.\n\n" +
-								"**Railway Setup:**\n" +
-								"1. Go to Railway project → Variables\n" +
-								"2. Add: `GENIUS_API_TOKEN` = your token\n" +
-								"3. Redeploy\n\n" +
-								"**Get a token:** https://genius.com/api-clients"
-							),
-					],
-				});
-			}
-
-			const options = {
-				apiKey: geniusToken,
-				title: searchQuery,
-				artist: "",
-				optimizeQuery: true
-			};
-
-			// First get the song info
-			const songInfo = await getSong(options);
-
-			if (!songInfo) {
-				return interaction.editReply({
-					embeds: [
-						new MessageEmbed()
-							.setColor("RED")
-							.setDescription(
-								`No song found for: \`${searchQuery}\`\n\n` +
-								`**Tip:** Try searching with format: \`Artist - Song Name\`\n` +
-								`Example: \`/lyrics song: Queen - Bohemian Rhapsody\``
-							),
-					],
-				});
-			}
-
-			// Then get the lyrics using the song URL
-			const lyrics = await getLyrics(songInfo.url);
+			// lyrics-finder automatically searches multiple sources
+			const lyrics = await lyricsFinder(searchQuery, "") || await lyricsFinder("", searchQuery);
 
 			if (!lyrics || lyrics.trim().length === 0) {
 				return interaction.editReply({
 					embeds: [
 						new MessageEmbed()
 							.setColor("RED")
+							.setTitle("No Lyrics Found")
 							.setDescription(
-								`Found the song but no lyrics available: \`${songInfo.title}\`\n\n` +
-								`**Artist:** ${songInfo.artist.name || 'Unknown'}`
+								`Could not find lyrics for: \`${searchQuery}\`\n\n` +
+								`**Tips:**\n` +
+								`• Try format: \`Artist - Song Name\`\n` +
+								`• Use English song/artist names\n` +
+								`• Check spelling\n\n` +
+								`**Example:** \`/lyrics song: Queen - Bohemian Rhapsody\``
 							),
 					],
 				});
@@ -138,7 +92,7 @@ const command = new SlashCommand()
 			let lyricsText = lyrics;
 
 			if (lyricsText.length > maxLength) {
-				lyricsText = lyricsText.substring(0, maxLength - 50) + "\n\n... (truncated)";
+				lyricsText = lyricsText.substring(0, maxLength - 100) + "\n\n... *(lyrics truncated)*";
 			}
 
 			const lyricsEmbed = new MessageEmbed()
@@ -146,8 +100,7 @@ const command = new SlashCommand()
 				.setTitle(`🎵 ${searchQuery}`)
 				.setDescription(lyricsText)
 				.setFooter({
-					text: 'Lyrics provided by Genius',
-					iconURL: 'https://images.genius.com/8ed669cadd956443e29c70361ec4f372.1000x1000x1.png'
+					text: 'Lyrics from multiple sources',
 				});
 
 			return interaction.editReply({
@@ -155,20 +108,20 @@ const command = new SlashCommand()
 			});
 
 		} catch (error) {
-			client.error("Lyrics error details:");
-			client.error("Query:", searchQuery);
-			client.error("Error message:", error.message);
-			client.error("Error stack:", error.stack);
+			client.error("Lyrics error:", error);
 
 			return interaction.editReply({
 				embeds: [
 					new MessageEmbed()
 						.setColor("RED")
+						.setTitle("Error Fetching Lyrics")
 						.setDescription(
 							`Failed to fetch lyrics for: \`${searchQuery}\`\n\n` +
-							`**Error:** ${error.message || 'Unknown error'}\n` +
-							`**Details:** ${error.stack ? error.stack.split('\n')[0] : 'No details'}\n\n` +
-							`**Tip:** Try searching with format: \`Artist - Song Name\``
+							`**Error:** ${error.message || 'Unknown error'}\n\n` +
+							`**Try:**\n` +
+							`• Different search terms\n` +
+							`• Format: \`Artist - Song Name\`\n` +
+							`• Popular English songs work best`
 						),
 				],
 			});
