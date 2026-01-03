@@ -62,6 +62,13 @@ const command = new SlashCommand()
       };
     });
 
+    console.log(`[DEBUG] Query: ${query}`);
+    console.log(`[DEBUG] Search Result LoadType: ${res.loadType}`);
+    if (res.loadType === 'NO_MATCHES' || res.loadType === 'LOAD_FAILED') {
+      console.log(`[DEBUG] Tracks found: ${res.tracks?.length || 0}`);
+      if (res.exception) console.log(`[DEBUG] Exception: ${JSON.stringify(res.exception)}`);
+    }
+
     if (res.loadType === "LOAD_FAILED") {
       if (!player.queue.current) {
         player.destroy();
