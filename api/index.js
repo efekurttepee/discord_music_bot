@@ -25,19 +25,23 @@ class Server extends EventEmitter {
 	constructor(client) {
 		super();
 		this.client = client;
+		console.log("[SERVER] Initializing...");
 		getConfig().then(this.init.bind(this));
 	}
 
 	init(conf) {
 		this.config = conf;
 		this.app = express();
-		
+
 		this.app.use(express.static(join(__dirname, "..", "public")));
-		
+
 		// Static Routes for scripts
 		const dist = join(__dirname, "..", "dashboard", "out", "_next")
-		
+
 		this.app.use("/_next", express.static(dist));
+
+		this.app.use(express.json());
+		this.app.use(express.urlencoded({ extended: true }));
 
 		// Session and Passport
 		this.app.use(session({
@@ -69,7 +73,7 @@ class Server extends EventEmitter {
 
 		this.listen();
 	}
-	
+
 	initPassport() {
 		this.app.use(passport.initialize());
 

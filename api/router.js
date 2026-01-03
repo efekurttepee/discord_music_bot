@@ -39,7 +39,7 @@ router.get("/servers", Auth, (_req, res) => {
 
 router.get("/api/callback", passport.authenticate('discord', {
 	failureRedirect: '/',
-}), (req, res ) => {
+}), (req, res) => {
 	req.session.save(() => {
 		res.redirect("/");
 	});

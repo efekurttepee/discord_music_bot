@@ -123,3 +123,7 @@ yarn.lock
 .idea/
 .vscode/
 .history/
+
+# Local Dev
+dashboard_old/
+dashboard-only.js
