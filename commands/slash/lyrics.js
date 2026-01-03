@@ -100,16 +100,34 @@ const command = new SlashCommand()
 				optimizeQuery: true
 			};
 
-			const lyrics = await getLyrics(options);
+			// First get the song info
+			const songInfo = await getSong(options);
 
-			if (!lyrics) {
+			if (!songInfo) {
 				return interaction.editReply({
 					embeds: [
 						new MessageEmbed()
 							.setColor("RED")
 							.setDescription(
-								`No lyrics found for: \`${searchQuery}\`\n\n` +
-								`**Tip:** Try searching with format: \`Artist - Song Name\``
+								`No song found for: \`${searchQuery}\`\n\n` +
+								`**Tip:** Try searching with format: \`Artist - Song Name\`\n` +
+								`Example: \`/lyrics song: Queen - Bohemian Rhapsody\``
+							),
+					],
+				});
+			}
+
+			// Then get the lyrics using the song URL
+			const lyrics = await getLyrics(songInfo.url);
+
+			if (!lyrics || lyrics.trim().length === 0) {
+				return interaction.editReply({
+					embeds: [
+						new MessageEmbed()
+							.setColor("RED")
+							.setDescription(
+								`Found the song but no lyrics available: \`${songInfo.title}\`\n\n` +
+								`**Artist:** ${songInfo.artist.name || 'Unknown'}`
 							),
 					],
 				});
