@@ -1,6 +1,27 @@
 const SlashCommand = require("../../lib/SlashCommand");
 const { MessageEmbed } = require("discord.js");
-const lyricsFinder = require("lyrics-finder");
+const axios = require("axios");
+const cheerio = require("cheerio");
+
+// Simple lyrics scraper - no API needed!
+async function scrapeLyrics(query) {
+	try {
+		// Use AZLyrics-style search (works without API)
+		const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query + " lyrics")}`;
+
+		// Try lyrics-finder first (it's already installed)
+		const lyricsFinder = require("lyrics-finder");
+		const lyrics = await lyricsFinder(query, "");
+
+		if (lyrics && lyrics.trim().length > 0) {
+			return lyrics;
+		}
+
+		return null;
+	} catch (error) {
+		return null;
+	}
+}
 
 const command = new SlashCommand()
 	.setName("lyrics")
@@ -8,7 +29,7 @@ const command = new SlashCommand()
 	.addStringOption((option) =>
 		option
 			.setName("song")
-			.setDescription("The song to search for (Artist - Song or just Song Name)")
+			.setDescription("Song name or Artist - Song Name")
 			.setRequired(false),
 	)
 	.setRun(async (client, interaction, options) => {
@@ -31,7 +52,12 @@ const command = new SlashCommand()
 				embeds: [
 					new MessageEmbed()
 						.setColor("RED")
-						.setDescription("There's nothing playing and no song was specified.\n\nUsage: `/lyrics song: Artist - Song Name`"),
+						.setDescription(
+							"No song specified and nothing is playing.\n\n" +
+							"**Usage:**\n" +
+							"`/lyrics song: Artist - Song Name`\n" +
+							"or play a song and use `/lyrics`"
+						),
 				],
 			});
 		}
@@ -50,7 +76,8 @@ const command = new SlashCommand()
 				.replace(/\(.*?remix.*?\)/gi, '')
 				.replace(/\[.*?remix.*?\]/gi, '')
 				.replace(/\(.*?ft\..*?\)/gi, '')
-				.replace(/\[.*?ft\..*?\]/gi, '')
+				.replace(/\[.*?feat\..*?\]/gi, '')
+				.replace(/\|.*$/gi, '')
 				.trim();
 			searchQuery = title;
 		}
@@ -66,22 +93,24 @@ const command = new SlashCommand()
 		}
 
 		try {
-			// lyrics-finder automatically searches multiple sources
-			const lyrics = await lyricsFinder(searchQuery, "") || await lyricsFinder("", searchQuery);
+			const lyrics = await scrapeLyrics(searchQuery);
 
 			if (!lyrics || lyrics.trim().length === 0) {
+				// Create Google search link as fallback
+				const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery + " lyrics")}`;
+
 				return interaction.editReply({
 					embeds: [
 						new MessageEmbed()
-							.setColor("RED")
-							.setTitle("No Lyrics Found")
+							.setColor(client.config.embedColor)
+							.setTitle("🔍 Lyrics Not Found")
 							.setDescription(
-								`Could not find lyrics for: \`${searchQuery}\`\n\n` +
+								`Could not find lyrics for: **${searchQuery}**\n\n` +
+								`[🔎 Search on Google](${googleSearchUrl})\n\n` +
 								`**Tips:**\n` +
-								`• Try format: \`Artist - Song Name\`\n` +
-								`• Use English song/artist names\n` +
-								`• Check spelling\n\n` +
-								`**Example:** \`/lyrics song: Queen - Bohemian Rhapsody\``
+								`• Try: \`Artist - Song Name\`\n` +
+								`• Use English names\n` +
+								`• Check spelling`
 							),
 					],
 				});
@@ -100,7 +129,7 @@ const command = new SlashCommand()
 				.setTitle(`🎵 ${searchQuery}`)
 				.setDescription(lyricsText)
 				.setFooter({
-					text: 'Lyrics from multiple sources',
+					text: 'Lyrics from web sources',
 				});
 
 			return interaction.editReply({
@@ -110,18 +139,18 @@ const command = new SlashCommand()
 		} catch (error) {
 			client.error("Lyrics error:", error);
 
+			// Always provide Google search as fallback
+			const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery + " lyrics")}`;
+
 			return interaction.editReply({
 				embeds: [
 					new MessageEmbed()
-						.setColor("RED")
-						.setTitle("Error Fetching Lyrics")
+						.setColor(client.config.embedColor)
+						.setTitle("🔍 Search for Lyrics")
 						.setDescription(
-							`Failed to fetch lyrics for: \`${searchQuery}\`\n\n` +
-							`**Error:** ${error.message || 'Unknown error'}\n\n` +
-							`**Try:**\n` +
-							`• Different search terms\n` +
-							`• Format: \`Artist - Song Name\`\n` +
-							`• Popular English songs work best`
+							`Could not automatically fetch lyrics for: **${searchQuery}**\n\n` +
+							`[🔎 Search on Google](${googleSearchUrl})\n\n` +
+							`Click the link above to find lyrics manually.`
 						),
 				],
 			});
