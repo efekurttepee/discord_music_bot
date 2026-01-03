@@ -137,14 +137,19 @@ const command = new SlashCommand()
 			});
 
 		} catch (error) {
-			client.error("Lyrics error:", error);
+			client.error("Lyrics error details:");
+			client.error("Query:", searchQuery);
+			client.error("Error message:", error.message);
+			client.error("Error stack:", error.stack);
+
 			return interaction.editReply({
 				embeds: [
 					new MessageEmbed()
 						.setColor("RED")
 						.setDescription(
 							`Failed to fetch lyrics for: \`${searchQuery}\`\n\n` +
-							`**Error:** ${error.message || 'Unknown error'}\n\n` +
+							`**Error:** ${error.message || 'Unknown error'}\n` +
+							`**Details:** ${error.stack ? error.stack.split('\n')[0] : 'No details'}\n\n` +
 							`**Tip:** Try searching with format: \`Artist - Song Name\``
 						),
 				],
