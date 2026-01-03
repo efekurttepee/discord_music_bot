@@ -50,9 +50,29 @@ module.exports = {
       fetchReply: true,
     });
 
-    const query =
+    const SpotifyResolver = require("../../lib/SpotifyResolver");
+    const spotifyResolver = new SpotifyResolver(client);
+
+    let query =
       interaction.channel.messages.cache.get(interaction.targetId).content ??
       (await interaction.channel.messages.fetch(interaction.targetId));
+
+    if (query.includes("spotify.com")) {
+      await interaction.editReply({
+        embeds: [
+          new MessageEmbed()
+            .setColor(client.config.embedColor)
+            .setDescription(":mag_right: **Spotify Linki Çözümleniyor...**"),
+        ],
+      });
+      const result = await spotifyResolver.resolve(query);
+      if (result.type === 'TRACK') {
+        query = result.tracks[0];
+      } else if (result.type === 'PLAYLIST') {
+        query = result.tracks[0];
+      }
+    }
+
     let res = await player.search(query, interaction.user).catch((err) => {
       client.error(err);
       return {
@@ -115,9 +135,9 @@ module.exports = {
             value: res.tracks[0].isStream
               ? `\`LIVE 🔴 \``
               : `\`${client.ms(res.tracks[0].duration, {
-                  colonNotation: true,
-                  secondsDecimalDigits: 0,
-                })}\``,
+                colonNotation: true,
+                secondsDecimalDigits: 0,
+              })}\``,
             inline: true,
           }
         );
