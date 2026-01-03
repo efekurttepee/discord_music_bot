@@ -69,10 +69,10 @@ const command = new SlashCommand()
       });
       const result = await spotifyResolver.resolve(query);
       if (result.type === 'TRACK') {
-        query = `scsearch:${result.tracks[0]}`;
+        query = result.tracks[0];
       } else if (result.type === 'PLAYLIST') {
         // For now, just play the first track of the playlist as a simple fix
-        query = `scsearch:${result.tracks[0]}`;
+        query = result.tracks[0];
         // Ideally we would add all to queue, but let's get single track working first
       }
     }
@@ -83,6 +83,22 @@ const command = new SlashCommand()
         loadType: "LOAD_FAILED",
       };
     });
+
+    // Fallback System: If YouTube fails (LOAD_FAILED or NO_MATCHES), try SoundCloud
+    if (res.loadType === "LOAD_FAILED" || res.loadType === "NO_MATCHES") {
+      console.log(`[DEBUG] YouTube validation failed for '${query}'. Retrying with SoundCloud...`);
+
+      let scQuery = query.startsWith("scsearch:") ? query : `scsearch:${query}`;
+      // If it was already a specific search, don't double prefix, but if it was raw text, add scsearch:
+
+      let scRes = await player.search(scQuery, interaction.user).catch((err) => {
+        return { loadType: "LOAD_FAILED" };
+      });
+
+      if (scRes.loadType !== "LOAD_FAILED" && scRes.loadType !== "NO_MATCHES") {
+        res = scRes; // Use SoundCloud result if successful
+      }
+    }
 
     console.log(`[DEBUG] Query: ${query}`);
     console.log(`[DEBUG] Search Result LoadType: ${res.loadType}`);

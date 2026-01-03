@@ -67,9 +67,9 @@ module.exports = {
       });
       const result = await spotifyResolver.resolve(query);
       if (result.type === 'TRACK') {
-        query = `scsearch:${result.tracks[0]}`;
+        query = result.tracks[0];
       } else if (result.type === 'PLAYLIST') {
-        query = `scsearch:${result.tracks[0]}`;
+        query = result.tracks[0];
       }
     }
 
@@ -79,6 +79,16 @@ module.exports = {
         loadType: "LOAD_FAILED",
       };
     });
+
+    // Fallback System: If YouTube fails (LOAD_FAILED or NO_MATCHES), try SoundCloud
+    if (res.loadType === "LOAD_FAILED" || res.loadType === "NO_MATCHES") {
+      let scQuery = `scsearch:${query}`;
+      let scRes = await player.search(scQuery, interaction.user).catch(() => ({ loadType: "LOAD_FAILED" }));
+
+      if (scRes.loadType !== "LOAD_FAILED" && scRes.loadType !== "NO_MATCHES") {
+        res = scRes;
+      }
+    }
 
     if (res.loadType === "LOAD_FAILED") {
       if (!player.queue.current) {
