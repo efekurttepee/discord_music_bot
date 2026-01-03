@@ -9,11 +9,13 @@ const LoadCommands = require("../util/loadCommands");
 	const commands = await LoadCommands().then((cmds) => {
 		return [].concat(cmds.slash).concat(cmds.context);
 	});
-	
-	console.log("Deploying commands to global...");
+
+	console.log(`Loaded ${commands.length} commands`);
+	const jsonCommands = commands.map(cmd => cmd.toJSON ? cmd.toJSON() : cmd);
+	console.log(`Deploying ${jsonCommands.length} commands to global...`);
 	await rest
 		.put(Routes.applicationCommands(config.clientId), {
-			body: commands,
+			body: jsonCommands,
 		})
 		.catch(console.log);
 	console.log("Successfully deployed commands!");
