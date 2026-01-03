@@ -41,6 +41,11 @@ async function scrapeGeniusLyrics(query) {
 		// Genius stores lyrics in div[data-lyrics-container="true"]
 		let lyrics = '';
 		$('div[data-lyrics-container="true"]').each((i, elem) => {
+			// Convert br tags to newlines before getting text
+			$(elem).find('br').replaceWith('\n');
+			// Also handle different line break elements
+			$(elem).find('p').after('\n\n');
+
 			lyrics += $(elem).text() + '\n\n';
 		});
 
@@ -63,8 +68,8 @@ async function scrapeGeniusLyrics(query) {
 			// Remove "Read More" and similar
 			.replace(/Read More.*$/gm, '')
 			.replace(/See .*? Live.*$/gm, '')
-			// Remove extra blank lines
-			.replace(/\n{3,}/g, '\n\n')
+			// Remove extra blank lines (but keep double newlines for verses)
+			.replace(/\n{4,}/g, '\n\n')
 			.trim();
 
 		if (lyrics.length > 0) {
