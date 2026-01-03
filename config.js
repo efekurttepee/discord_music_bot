@@ -27,13 +27,13 @@ module.exports = {
 	// Lavalink server; public lavalink -> https://lavalink-list.darrennathanael.com/; create one yourself -> https://darrennathanael.com/post/how-to-lavalink
 	nodes: [
 		{
-			identifier: process.env.LAVALINK_ID || "Main Node", //- Used for indentifier in stats commands.
-			host: process.env.LAVALINK_HOST || "lavalink.example.com", //- The host name or IP of the lavalink server.
-			port: parseInt(process.env.LAVALINK_PORT) || 80, // The port that lavalink is listening to. This must be a number!
-			password: process.env.LAVALINK_PASSWORD || "youshallnotpass", //- The password of the lavalink server.
-			retryAmount: 200, //- The amount of times to retry connecting to the node if connection got dropped.
-			retryDelay: 40, //- Delay between reconnect attempts if connection is lost.
-			secure: process.env.LAVALINK_SECURE === "true", //- Can be either true or false. Only use true if ssl is enabled!
+			identifier: process.env.LAVALINK_ID || "Main Node",
+			host: process.env.LAVALINK_HOST || "lavalink.example.com",
+			port: parseInt(process.env.LAVALINK_PORT) || 80,
+			password: process.env.LAVALINK_PASSWORD || "youshallnotpass",
+			retryAmount: 200,
+			retryDelay: 40,
+			secure: process.env.LAVALINK_SECURE === "true",
 		},
 	],
 	embedColor: "#FF00FF", //- Color of the embeds, hex supported
