@@ -69,10 +69,10 @@ const command = new SlashCommand()
       });
       const result = await spotifyResolver.resolve(query);
       if (result.type === 'TRACK') {
-        query = result.tracks[0];
+        query = `scsearch:${result.tracks[0]}`;
       } else if (result.type === 'PLAYLIST') {
         // For now, just play the first track of the playlist as a simple fix
-        query = result.tracks[0];
+        query = `scsearch:${result.tracks[0]}`;
         // Ideally we would add all to queue, but let's get single track working first
       }
     }
